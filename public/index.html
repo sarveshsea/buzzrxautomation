@@ -197,6 +197,26 @@
       </div>
     </div>
 
+    <!-- Posting Calendar -->
+    <div class="card card-full" style="margin-bottom:1.5rem">
+      <div class="card-header">
+        <p class="card-title">Posting Calendar</p>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <button class="btn btn-outline btn-xs" onclick="calendarNav(-1)">&larr;</button>
+          <span id="calWeekLabel" style="font-size:0.75rem;color:var(--muted-foreground);min-width:120px;text-align:center"></span>
+          <button class="btn btn-outline btn-xs" onclick="calendarNav(1)">&rarr;</button>
+        </div>
+      </div>
+      <div class="card-content">
+        <div style="display:flex;gap:0.25rem;margin-bottom:0.5rem">
+          <span style="font-size:0.65rem;display:flex;align-items:center;gap:0.25rem;color:var(--muted-foreground)"><span style="width:8px;height:8px;border-radius:2px;background:var(--green);display:inline-block"></span> Posted</span>
+          <span style="font-size:0.65rem;display:flex;align-items:center;gap:0.25rem;color:var(--muted-foreground);margin-left:0.75rem"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent);display:inline-block"></span> Scheduled</span>
+          <span style="font-size:0.65rem;display:flex;align-items:center;gap:0.25rem;color:var(--muted-foreground);margin-left:0.75rem"><span style="width:8px;height:8px;border-radius:2px;background:var(--muted);display:inline-block"></span> Slot</span>
+        </div>
+        <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:0.5rem"></div>
+      </div>
+    </div>
+
     <!-- 3-column: Headlines | Queue | Post Activity -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-bottom:1.5rem" class="three-col">
       <!-- Headlines -->
@@ -242,25 +262,6 @@
       </div>
     </div>
 
-    <!-- Posting Calendar -->
-    <div class="card card-full" style="margin-bottom:1.5rem">
-      <div class="card-header">
-        <p class="card-title">Posting Calendar</p>
-        <div style="display:flex;gap:0.5rem;align-items:center">
-          <button class="btn btn-outline btn-xs" onclick="calendarNav(-1)">&larr;</button>
-          <span id="calWeekLabel" style="font-size:0.75rem;color:var(--muted-foreground);min-width:120px;text-align:center"></span>
-          <button class="btn btn-outline btn-xs" onclick="calendarNav(1)">&rarr;</button>
-        </div>
-      </div>
-      <div class="card-content">
-        <div style="display:flex;gap:0.25rem;margin-bottom:0.5rem">
-          <span style="font-size:0.65rem;display:flex;align-items:center;gap:0.25rem;color:var(--muted-foreground)"><span style="width:8px;height:8px;border-radius:2px;background:var(--green);display:inline-block"></span> Posted</span>
-          <span style="font-size:0.65rem;display:flex;align-items:center;gap:0.25rem;color:var(--muted-foreground);margin-left:0.75rem"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent);display:inline-block"></span> Scheduled</span>
-          <span style="font-size:0.65rem;display:flex;align-items:center;gap:0.25rem;color:var(--muted-foreground);margin-left:0.75rem"><span style="width:8px;height:8px;border-radius:2px;background:var(--muted);display:inline-block"></span> Slot</span>
-        </div>
-        <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:0.5rem"></div>
-      </div>
-    </div>
   </div>
 
   <script>
