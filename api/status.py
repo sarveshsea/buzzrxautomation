@@ -57,7 +57,7 @@ class handler(BaseHTTPRequestHandler):
             if HAS_SUPABASE:
                 result["usage"] = get_usage()
                 result["queue"] = get_queue()
-                result["recent_posts"] = get_post_history(limit=10)
+                result["recent_posts"] = get_post_history(limit=60)
 
             self._respond(200, result)
         except Exception as e:

@@ -120,6 +120,18 @@
     .hl-title a { color: var(--foreground); text-decoration: none; }
     .hl-title a:hover { color: var(--accent); text-decoration: underline; }
 
+    /* Calendar */
+    .cal-day { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem; min-height: 120px; }
+    .cal-day.today { border-color: var(--accent); }
+    .cal-day-header { font-size: 0.7rem; font-weight: 600; color: var(--muted-foreground); margin-bottom: 0.375rem; display: flex; justify-content: space-between; }
+    .cal-day-header .cal-date { color: var(--foreground); }
+    .cal-day.today .cal-day-header .cal-date { color: var(--accent); }
+    .cal-slot { font-size: 0.65rem; padding: 0.2rem 0.375rem; border-radius: 4px; margin-bottom: 0.25rem; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: default; }
+    .cal-slot.posted { background: rgba(34,197,94,0.15); color: var(--green); }
+    .cal-slot.scheduled { background: rgba(245,158,11,0.15); color: var(--accent); }
+    .cal-slot.empty { background: var(--muted); color: #52525b; }
+    .cal-slot:hover { opacity: 0.8; }
+
     /* Queue button — subtle ghost style */
     .btn-queue { background: transparent; color: var(--muted-foreground); border: 1px solid var(--border); font-weight: 500; }
     .btn-queue:hover:not(:disabled) { background: var(--muted); color: var(--foreground); }
@@ -225,11 +237,28 @@
           <span style="font-size:0.7rem;color:var(--muted-foreground)" id="postCount"></span>
         </div>
         <div class="card-content" style="max-height:500px;overflow-y:auto">
-          <div style="margin-bottom:0.75rem;padding:0.5rem;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius);font-size:0.75rem;color:var(--accent)">
-            <strong>Cron:</strong> GitHub Actions hourly · Vercel daily 12:00 UTC
-          </div>
           <div id="recentPosts" style="font-size:0.8rem;color:var(--muted-foreground)">Loading...</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Posting Calendar -->
+    <div class="card card-full" style="margin-bottom:1.5rem">
+      <div class="card-header">
+        <p class="card-title">Posting Calendar</p>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <button class="btn btn-outline btn-xs" onclick="calendarNav(-1)">&larr;</button>
+          <span id="calWeekLabel" style="font-size:0.75rem;color:var(--muted-foreground);min-width:120px;text-align:center"></span>
+          <button class="btn btn-outline btn-xs" onclick="calendarNav(1)">&rarr;</button>
+        </div>
+      </div>
+      <div class="card-content">
+        <div style="display:flex;gap:0.25rem;margin-bottom:0.5rem">
+          <span style="font-size:0.65rem;display:flex;align-items:center;gap:0.25rem;color:var(--muted-foreground)"><span style="width:8px;height:8px;border-radius:2px;background:var(--green);display:inline-block"></span> Posted</span>
+          <span style="font-size:0.65rem;display:flex;align-items:center;gap:0.25rem;color:var(--muted-foreground);margin-left:0.75rem"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent);display:inline-block"></span> Scheduled</span>
+          <span style="font-size:0.65rem;display:flex;align-items:center;gap:0.25rem;color:var(--muted-foreground);margin-left:0.75rem"><span style="width:8px;height:8px;border-radius:2px;background:var(--muted);display:inline-block"></span> Slot</span>
+        </div>
+        <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:0.5rem"></div>
       </div>
     </div>
   </div>
@@ -518,8 +547,11 @@
         else if (data.headlines && data.headlines.length > 0) renderHeadlines(data.headlines.map(h => ({title: h, source: ''})));
         else renderHeadlines([]);
 
-        // Recent posts
-        renderRecentPosts(data.recent_posts || []);
+        // Recent posts + calendar
+        const posts = data.recent_posts || [];
+        renderRecentPosts(posts);
+        calPostData = posts;
+        renderCalendar();
       } catch (e) {
         document.getElementById('statusBadge').className = 'badge error';
         document.getElementById('statusText').textContent = 'Offline';
@@ -625,6 +657,109 @@
           </div>
           <div style="font-size:0.8rem;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(p.tweet)}</div>
           ${p.headline ? `<div style="font-size:0.7rem;color:var(--muted-foreground);margin-top:0.2rem">Re: ${esc(p.headline)}</div>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    // ── Posting Calendar ──────────────────────────────
+    const CRON_HOURS_UTC = [13,14,15,16,17,18,20,22]; // from GitHub Actions cron
+    let calWeekOffset = 0;
+    let calPostData = []; // populated from recent_posts
+
+    function calendarNav(dir) {
+      calWeekOffset += dir;
+      renderCalendar();
+    }
+
+    function getWeekDays(offset) {
+      const now = new Date();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - now.getDay() + 1 + (offset * 7));
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        days.push(d);
+      }
+      return days;
+    }
+
+    function sameDay(a, b) {
+      return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    }
+
+    function renderCalendar() {
+      const days = getWeekDays(calWeekOffset);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+      // Week label
+      const startLabel = days[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const endLabel = days[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      document.getElementById('calWeekLabel').textContent = `${startLabel} – ${endLabel}`;
+
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = days.map((day, i) => {
+        const isToday = sameDay(day, today);
+        const isPast = day < today;
+        const isFuture = day > today;
+        const dateStr = day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+        // Find posts for this day
+        const dayPosts = calPostData.filter(p => {
+          const pDate = new Date(p.posted_at);
+          return sameDay(pDate, day);
+        });
+
+        // Build time slots
+        let slotsHtml = '';
+
+        if (isPast || isToday) {
+          // Show actual posts
+          dayPosts.forEach(p => {
+            const time = new Date(p.posted_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            const preview = (p.tweet || '').substring(0, 40);
+            slotsHtml += `<div class="cal-slot posted" title="${esc(p.tweet)}">${time} ${esc(preview)}...</div>`;
+          });
+        }
+
+        if (isToday) {
+          // Show remaining scheduled slots for today
+          CRON_HOURS_UTC.forEach(h => {
+            const slotTime = new Date(day);
+            slotTime.setUTCHours(h, 0, 0, 0);
+            if (slotTime > now) {
+              const time = slotTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+              slotsHtml += `<div class="cal-slot scheduled">${time} AI+RSS</div>`;
+            }
+          });
+        }
+
+        if (isFuture) {
+          // Show all planned slots
+          CRON_HOURS_UTC.forEach(h => {
+            const slotTime = new Date(day);
+            slotTime.setUTCHours(h, 0, 0, 0);
+            const time = slotTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            slotsHtml += `<div class="cal-slot scheduled">${time} AI+RSS</div>`;
+          });
+        }
+
+        if (!slotsHtml && isPast) {
+          slotsHtml = '<div class="cal-slot empty">No posts</div>';
+        }
+
+        const postCount = isPast || isToday ? dayPosts.length : CRON_HOURS_UTC.length;
+        const countLabel = isPast ? `${dayPosts.length} posted` : isToday ? `${dayPosts.length}/${CRON_HOURS_UTC.length}` : `${CRON_HOURS_UTC.length} planned`;
+
+        return `<div class="cal-day ${isToday ? 'today' : ''}">
+          <div class="cal-day-header">
+            <span>${dayNames[i]}</span>
+            <span class="cal-date">${dateStr}</span>
+          </div>
+          <div style="font-size:0.6rem;color:var(--muted-foreground);margin-bottom:0.375rem">${countLabel}</div>
+          ${slotsHtml}
         </div>`;
       }).join('');
     }
