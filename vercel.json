@@ -1,0 +1,14 @@
+{
+  "builds": [
+    { "src": "api/*.py", "use": "@vercel/python" },
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1.py" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ],
+  "crons": [
+    { "path": "/api/post", "schedule": "0 * * * *" },
+    { "path": "/api/react", "schedule": "30 * * * *" }
+  ]
+}

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buzzr Tweet Bot</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    :root {
+      --background: #09090b;
+      --foreground: #fafafa;
+      --card: #09090b;
+      --card-foreground: #fafafa;
+      --muted: #27272a;
+      --muted-foreground: #a1a1aa;
+      --border: #27272a;
+      --primary: #fafafa;
+      --primary-foreground: #18181b;
+      --accent: #f59e0b;
+      --accent-foreground: #000;
+      --destructive: #ef4444;
+      --ring: #d4d4d8;
+      --radius: 0.5rem;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* Nav */
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 2rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem;
+    }
+    .nav-left { display: flex; align-items: center; gap: 0.75rem; }
+    .nav h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.025em; }
+    .nav .logo { font-size: 1.5rem; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.375rem;
+      padding: 0.125rem 0.625rem; border-radius: 9999px;
+      font-size: 0.75rem; font-weight: 500; border: 1px solid var(--border);
+    }
+    .badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .badge.active .dot { background: #22c55e; }
+    .badge.error .dot { background: var(--destructive); }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+
+    /* Cards */
+    .card {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--card); overflow: hidden;
+    }
+    .card-header { padding: 1.25rem 1.5rem 0.75rem; }
+    .card-title {
+      font-size: 0.875rem; font-weight: 500; color: var(--muted-foreground);
+      letter-spacing: 0;
+    }
+    .card-content { padding: 0 1.5rem 1.25rem; }
+    .card-full { grid-column: 1 / -1; }
+
+    /* Stats */
+    .stat-value { font-size: 2rem; font-weight: 700; letter-spacing: -0.05em; margin-top: 0.25rem; }
+    .stat-desc { font-size: 0.8rem; color: var(--muted-foreground); margin-top: 0.125rem; }
+
+    /* List rows */
+    .row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.625rem 0; border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+    .row:last-child { border-bottom: none; }
+    .row-label { color: var(--muted-foreground); }
+    .row-value { font-weight: 500; }
+
+    /* Status indicators */
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block; margin-right: 0.5rem;
+    }
+    .status-dot.ok { background: #22c55e; }
+    .status-dot.warn { background: var(--accent); }
+    .status-dot.err { background: var(--destructive); }
+
+    /* Buttons */
+    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0.5rem 1rem; border-radius: var(--radius);
+      font-size: 0.875rem; font-weight: 500; font-family: inherit;
+      cursor: pointer; border: none; transition: all 0.15s;
+      height: 2.25rem;
+    }
+    .btn-primary { background: var(--foreground); color: var(--background); }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-outline {
+      background: transparent; color: var(--foreground);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { background: var(--muted); }
+    .btn-accent { background: var(--accent); color: var(--accent-foreground); }
+    .btn-accent:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Console */
+    .console {
+      background: var(--background); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem; margin-top: 1rem;
+      font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.8rem; line-height: 1.6; max-height: 240px;
+      overflow-y: auto; color: var(--muted-foreground); white-space: pre-wrap;
+    }
+    .console .success { color: #22c55e; }
+    .console .error { color: var(--destructive); }
+    .console .info { color: var(--accent); }
+
+    /* Headlines */
+    .headline {
+      padding: 0.5rem 0; border-bottom: 1px solid var(--border);
+      font-size: 0.8rem; line-height: 1.5; color: var(--muted-foreground);
+    }
+    .headline:last-child { border-bottom: none; }
+    .headline:hover { color: var(--foreground); }
+
+    /* Separator */
+    .separator { height: 1px; background: var(--border); margin: 1.5rem 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="nav">
+      <div class="nav-left">
+        <span class="logo">🐝</span>
+        <h1>Buzzr Tweet Bot</h1>
+      </div>
+      <span class="badge active" id="statusBadge">
+        <span class="dot"></span>
+        <span id="statusText">Loading</span>
+      </span>
+    </nav>
+
+    <div class="grid">
+      <!-- Templates -->
+      <div class="card">
+        <div class="card-header"><p class="card-title">Tweet Templates</p></div>
+        <div class="card-content">
+          <div class="stat-value" id="totalTemplates">—</div>
+          <div class="stat-desc">unique tweets loaded</div>
+          <div style="margin-top: 1rem;" id="templateBreakdown"></div>
+        </div>
+      </div>
+
+      <!-- Credentials -->
+      <div class="card">
+        <div class="card-header"><p class="card-title">Connections</p></div>
+        <div class="card-content" id="credStatus">
+          <div class="row"><span class="row-label">Loading...</span></div>
+        </div>
+      </div>
+
+      <!-- Config -->
+      <div class="card">
+        <div class="card-header"><p class="card-title">Schedule</p></div>
+        <div class="card-content" id="configInfo">
+          <div class="row"><span class="row-label">Loading...</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card card-full" style="margin-bottom: 1.5rem;">
+      <div class="card-header">
+        <p class="card-title">Controls</p>
+      </div>
+      <div class="card-content">
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btnPost" onclick="triggerPost()">Post Tweet</button>
+          <button class="btn btn-accent" id="btnReact" onclick="triggerReact()">React to News</button>
+          <button class="btn btn-outline" onclick="loadStatus()">Refresh</button>
+        </div>
+        <div class="console" id="actionLog"><span class="info">$</span> ready</div>
+      </div>
+    </div>
+
+    <!-- Headlines -->
+    <div class="card card-full">
+      <div class="card-header"><p class="card-title">Latest Sports Headlines</p></div>
+      <div class="card-content" id="headlines">
+        <div class="headline" style="color: #52525b;">Scanning feeds...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const log = document.getElementById('actionLog');
+    function appendLog(msg, cls = '') {
+      const span = document.createElement('span');
+      span.className = cls;
+      span.textContent = msg + '\n';
+      log.appendChild(span);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    async function loadStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const raw = await res.json();
+        const data = typeof raw.body === 'string' ? JSON.parse(raw.body) : raw;
+
+        const badge = document.getElementById('statusBadge');
+        const statusText = document.getElementById('statusText');
+        if (data.status === 'active') {
+          badge.className = 'badge active';
+          statusText.textContent = 'Active';
+        } else {
+          badge.className = 'badge error';
+          statusText.textContent = 'Setup needed';
+        }
+
+        document.getElementById('totalTemplates').textContent = data.total_templates || '—';
+        const bd = document.getElementById('templateBreakdown');
+        if (data.templates) {
+          bd.innerHTML = Object.entries(data.templates)
+            .map(([k, v]) => `<div class="row"><span class="row-label">${k}</span><span class="row-value">${v}</span></div>`)
+            .join('');
+        }
+
+        const creds = document.getElementById('credStatus');
+        if (data.credentials) {
+          creds.innerHTML = `
+            <div class="row">
+              <span class="row-label"><span class="status-dot ${data.credentials.twitter ? 'ok' : 'err'}"></span>Twitter/X</span>
+              <span class="row-value">${data.credentials.twitter ? 'Connected' : 'Missing'}</span>
+            </div>
+            <div class="row">
+              <span class="row-label"><span class="status-dot ${data.credentials.openrouter ? 'ok' : 'warn'}"></span>OpenRouter AI</span>
+              <span class="row-value">${data.credentials.openrouter ? 'Connected' : 'Optional'}</span>
+            </div>`;
+        }
+
+        const cfg = document.getElementById('configInfo');
+        if (data.config) {
+          cfg.innerHTML = `
+            <div class="row"><span class="row-label">Frequency</span><span class="row-value">Every hour</span></div>
+            <div class="row"><span class="row-label">Active hours</span><span class="row-value">${data.config.active_hours.start}:00–${data.config.active_hours.end}:00</span></div>
+            <div class="row"><span class="row-label">Media attach</span><span class="row-value">${Math.round(data.config.media_chance * 100)}%</span></div>`;
+        }
+
+        const hl = document.getElementById('headlines');
+        if (data.headlines && data.headlines.length > 0) {
+          hl.innerHTML = data.headlines.map(h => `<div class="headline">${h}</div>`).join('');
+        } else {
+          hl.innerHTML = '<div class="headline" style="color:#52525b">No new headlines</div>';
+        }
+      } catch (e) {
+        document.getElementById('statusBadge').className = 'badge error';
+        document.getElementById('statusText').textContent = 'Offline';
+      }
+    }
+
+    async function triggerPost() {
+      const btn = document.getElementById('btnPost');
+      btn.disabled = true;
+      appendLog('$ posting random tweet...', 'info');
+      try {
+        const res = await fetch('/api/post');
+        const raw = await res.json();
+        const data = typeof raw.body === 'string' ? JSON.parse(raw.body) : raw;
+        if (data.success) {
+          appendLog('Tweet posted successfully', 'success');
+          appendLog(data.tweet);
+        } else {
+          appendLog('Failed: ' + (data.error || 'unknown'), 'error');
+        }
+      } catch (e) {
+        appendLog('Error: ' + e.message, 'error');
+      }
+      btn.disabled = false;
+    }
+
+    async function triggerReact() {
+      const btn = document.getElementById('btnReact');
+      btn.disabled = true;
+      appendLog('$ scanning RSS feeds...', 'info');
+      try {
+        const res = await fetch('/api/react');
+        const raw = await res.json();
+        const data = typeof raw.body === 'string' ? JSON.parse(raw.body) : raw;
+        if (data.tweet) {
+          appendLog('Reactive tweet posted', 'success');
+          if (data.headline) appendLog('Re: ' + data.headline, 'info');
+          appendLog(data.tweet);
+        } else {
+          appendLog(data.message || 'No new headlines to react to', 'info');
+        }
+      } catch (e) {
+        appendLog('Error: ' + e.message, 'error');
+      }
+      btn.disabled = false;
+    }
+
+    loadStatus();
+  </script>
+</body>
+</html>

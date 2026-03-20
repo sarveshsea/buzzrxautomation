@@ -11,10 +11,11 @@ logger = logging.getLogger(__name__)
 class TweetScheduler:
     """Manages scheduled tweet posting."""
 
-    def __init__(self, poster, content_generator, config):
+    def __init__(self, poster, content_generator, config, media_manager=None):
         self.poster = poster
         self.content = content_generator
         self.config = config
+        self.media = media_manager
         self.posts_today = 0
         self.current_day = None
 
@@ -51,7 +52,8 @@ class TweetScheduler:
 
                 # Generate and post
                 tweet = self.content.generate()
-                success = self.poster.post(tweet, dry_run=dry_run)
+                media_path = self.media.pick_media() if self.media else None
+                success = self.poster.post(tweet, media_path=media_path, dry_run=dry_run)
 
                 if success:
                     self.posts_today += 1

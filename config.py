@@ -23,6 +23,12 @@ class Config:
         self.access_token = os.getenv("TWITTER_ACCESS_TOKEN", "")
         self.access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET", "")
 
+        # OpenRouter for AI tweet generation
+        self.openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "")
+        self.openrouter_model = os.getenv(
+            "OPENROUTER_MODEL", "meta-llama/llama-3.1-8b-instruct:free"
+        )
+
         # Load settings from config.json
         config_path = Path(__file__).parent / "config.json"
         if config_path.exists():
@@ -78,6 +84,10 @@ class Config:
     @property
     def hashtags(self):
         return self.settings.get("hashtags", [])
+
+    @property
+    def media_chance(self):
+        return self.settings.get("media_chance", 0.6)
 
     @property
     def dry_run(self):

@@ -7,6 +7,8 @@ import sys
 
 from config import Config
 from content import ContentGenerator
+from media import MediaManager
+from news import NewsReactor
 from poster import TweetPoster
 from scheduler import TweetScheduler
 
@@ -36,8 +38,9 @@ def cmd_run(args):
         content_mix=config.content_mix,
         hashtags=config.hashtags,
     )
+    media = MediaManager(media_chance=config.media_chance)
     poster = TweetPoster(config)
-    scheduler = TweetScheduler(poster, content, config)
+    scheduler = TweetScheduler(poster, content, config, media_manager=media)
     scheduler.run(dry_run=dry_run)
 
 
@@ -54,6 +57,7 @@ def cmd_post(args):
         content_mix=config.content_mix,
         hashtags=config.hashtags,
     )
+    media = MediaManager(media_chance=config.media_chance)
     poster = TweetPoster(config)
 
     if args.text:
@@ -62,8 +66,12 @@ def cmd_post(args):
         category = args.category if args.category else None
         tweet = content.generate(category=category)
 
-    print(f"\n📝 Tweet ({len(tweet)} chars):\n{tweet}\n")
-    poster.post(tweet, dry_run=dry_run)
+    media_path = None if args.no_media else media.pick_media()
+    print(f"\n📝 Tweet ({len(tweet)} chars):\n{tweet}")
+    if media_path:
+        print(f"   📎 Media: {media_path.name}")
+    print()
+    poster.post(tweet, media_path=media_path, dry_run=dry_run)
 
 
 def cmd_preview(args):
@@ -90,6 +98,37 @@ def cmd_preview(args):
         for i, tweet in enumerate(content.preview(count), 1):
             print(f"  [{i}] ({len(tweet)} chars)")
             print(f"  {tweet}\n")
+
+
+def cmd_react(args):
+    """React to latest sports news with an AI-generated tweet."""
+    config = Config()
+    dry_run = args.dry_run or config.dry_run
+
+    if not dry_run and not config.validate():
+        print("\n⚠️  Missing API credentials. Add them to your .env file.\n")
+        sys.exit(1)
+
+    reactor = NewsReactor(
+        openrouter_api_key=config.openrouter_api_key,
+        model=config.openrouter_model,
+    )
+    media = MediaManager(media_chance=config.media_chance)
+    poster = TweetPoster(config)
+
+    tweet, article = reactor.get_reactive_tweet()
+    if not tweet:
+        print("\n📰 No new sports headlines to react to right now.\n")
+        return
+
+    media_path = media.pick_media()
+    print(f"\n📰 Reacting to: {article['title']}")
+    print(f"   Source: {article['source']}")
+    print(f"\n📝 Tweet ({len(tweet)} chars):\n{tweet}")
+    if media_path:
+        print(f"   📎 Media: {media_path.name}")
+    print()
+    poster.post(tweet, media_path=media_path, dry_run=dry_run)
 
 
 def cmd_test_auth(args):
@@ -121,8 +160,14 @@ def main():
     post_parser = subparsers.add_parser("post", help="Post a single tweet")
     post_parser.add_argument("--text", type=str, help="Custom tweet text")
     post_parser.add_argument("--category", choices=["promo", "features", "engagement", "tips"])
+    post_parser.add_argument("--no-media", action="store_true", help="Skip media attachment")
     post_parser.add_argument("--dry-run", action="store_true", help="Simulate without posting")
     post_parser.set_defaults(func=cmd_post)
+
+    # react
+    react_parser = subparsers.add_parser("react", help="React to sports news with AI tweet")
+    react_parser.add_argument("--dry-run", action="store_true", help="Simulate without posting")
+    react_parser.set_defaults(func=cmd_react)
 
     # preview
     preview_parser = subparsers.add_parser("preview", help="Preview tweets without posting")

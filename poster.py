@@ -1,4 +1,4 @@
-"""Twitter/X API poster using Tweepy v2."""
+"""Twitter/X API poster using Tweepy v2 with media support."""
 
 import logging
 import time
@@ -8,15 +8,16 @@ logger = logging.getLogger(__name__)
 
 
 class TweetPoster:
-    """Handles posting tweets via the X API v2."""
+    """Handles posting tweets via the X API v2 with optional media."""
 
     def __init__(self, config):
         self.config = config
         self.client = None
+        self.api_v1 = None
         self._setup_client()
 
     def _setup_client(self):
-        """Initialize the Tweepy v2 client."""
+        """Initialize both Tweepy v2 client and v1.1 API for media uploads."""
         try:
             self.client = tweepy.Client(
                 bearer_token=self.config.bearer_token,
@@ -26,16 +27,43 @@ class TweetPoster:
                 access_token_secret=self.config.access_token_secret,
                 wait_on_rate_limit=True,
             )
+            # v1.1 API needed for media uploads
+            if self.config.api_key and self.config.access_token:
+                auth = tweepy.OAuth1UserHandler(
+                    self.config.api_key,
+                    self.config.api_secret,
+                    self.config.access_token,
+                    self.config.access_token_secret,
+                )
+                self.api_v1 = tweepy.API(auth, wait_on_rate_limit=True)
             logger.info("Tweepy client initialized successfully.")
         except Exception as e:
             logger.error(f"Failed to initialize Tweepy client: {e}")
             self.client = None
 
-    def post(self, text, dry_run=False):
-        """Post a tweet. Returns True on success."""
+    def _upload_media(self, media_path):
+        """Upload media file via v1.1 API. Returns media_id or None."""
+        if not self.api_v1:
+            logger.warning("No v1.1 API client — skipping media upload.")
+            return None
+
+        try:
+            media = self.api_v1.media_upload(filename=str(media_path))
+            logger.info(f"Media uploaded: {media_path.name} -> ID {media.media_id}")
+            return media.media_id
+        except Exception as e:
+            logger.error(f"Media upload failed for {media_path}: {e}")
+            return None
+
+    def post(self, text, media_path=None, dry_run=False):
+        """Post a tweet with optional media. Returns True on success."""
         if dry_run:
-            logger.info(f"[DRY RUN] Would post: {text}")
-            print(f"\n🔸 [DRY RUN] Would post:\n{text}\n")
+            media_note = f" + media: {media_path.name}" if media_path else ""
+            logger.info(f"[DRY RUN] Would post: {text}{media_note}")
+            print(f"\n🔸 [DRY RUN] Would post:\n{text}")
+            if media_path:
+                print(f"   📎 With media: {media_path.name}")
+            print()
             return True
 
         if not self.client:
@@ -43,7 +71,13 @@ class TweetPoster:
             return False
 
         try:
-            response = self.client.create_tweet(text=text)
+            media_ids = None
+            if media_path:
+                media_id = self._upload_media(media_path)
+                if media_id:
+                    media_ids = [media_id]
+
+            response = self.client.create_tweet(text=text, media_ids=media_ids)
             tweet_id = response.data["id"]
             logger.info(f"Tweet posted successfully! ID: {tweet_id}")
             print(f"\n✅ Tweet posted! ID: {tweet_id}")
@@ -52,7 +86,7 @@ class TweetPoster:
         except tweepy.TooManyRequests:
             logger.warning("Rate limit hit. Waiting 15 minutes...")
             time.sleep(900)
-            return self.post(text, dry_run=dry_run)
+            return self.post(text, media_path=media_path, dry_run=dry_run)
         except tweepy.Forbidden as e:
             logger.error(f"Forbidden — check your API access level: {e}")
             return False
