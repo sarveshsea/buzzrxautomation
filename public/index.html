@@ -118,9 +118,9 @@
     .hl-title a { color: var(--foreground); text-decoration: none; }
     .hl-title a:hover { color: var(--accent); text-decoration: underline; }
 
-    /* Better queue button */
-    .btn-queue { background: var(--accent); color: #000; font-weight: 600; border: none; }
-    .btn-queue:hover:not(:disabled) { opacity: 0.85; }
+    /* Queue button — subtle ghost style */
+    .btn-queue { background: transparent; color: var(--muted-foreground); border: 1px solid var(--border); font-weight: 500; }
+    .btn-queue:hover:not(:disabled) { background: var(--muted); color: var(--foreground); }
   </style>
 </head>
 <body>
@@ -213,6 +213,20 @@
         <div class="card-content" id="queueList">
           <div class="q-empty">Add headlines from the feed to generate AI tweets.</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Recent Posts / Activity -->
+    <div class="card card-full" style="margin-bottom:1.5rem">
+      <div class="card-header">
+        <p class="card-title">Post Activity</p>
+        <span style="font-size:0.7rem;color:var(--muted-foreground)" id="postCount"></span>
+      </div>
+      <div class="card-content">
+        <div style="margin-bottom:0.75rem;padding:0.625rem;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius);font-size:0.8rem;color:var(--accent)">
+          <strong>Auto-schedule:</strong> GitHub Actions posts every hour via cron. Vercel cron posts daily at 12:00 UTC.
+        </div>
+        <div id="recentPosts" style="font-size:0.8rem;color:var(--muted-foreground)">Loading post history...</div>
       </div>
     </div>
   </div>
@@ -490,6 +504,9 @@
         if (data.headlines_full && data.headlines_full.length > 0) renderHeadlines(data.headlines_full);
         else if (data.headlines && data.headlines.length > 0) renderHeadlines(data.headlines.map(h => ({title: h, source: ''})));
         else renderHeadlines([]);
+
+        // Recent posts
+        renderRecentPosts(data.recent_posts || []);
       } catch (e) {
         document.getElementById('statusBadge').className = 'badge error';
         document.getElementById('statusText').textContent = 'Offline';
@@ -570,6 +587,31 @@
         if (s) html += `<button class="chip ${activeFilter===s?'active':''}" data-source="${s}" onclick="setFilter('${s}')">${labels[s]||s}</button>`;
       });
       chips.innerHTML = html;
+    }
+
+    // ── Recent posts / activity ────────────────────
+    function renderRecentPosts(posts) {
+      const el = document.getElementById('recentPosts');
+      const countEl = document.getElementById('postCount');
+      if (!posts || posts.length === 0) {
+        el.innerHTML = '<div style="color:#52525b;padding:0.5rem 0">No posts yet. Use the controls above or wait for cron.</div>';
+        countEl.textContent = '';
+        return;
+      }
+      countEl.textContent = posts.length + ' recent';
+      el.innerHTML = `<table class="hl-table">
+        <thead><tr><th>Time</th><th>Tweet</th><th>Source</th><th>Cost</th></tr></thead>
+        <tbody>${posts.map(p => {
+          const time = new Date(p.posted_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+          const src = p.source === 'ai_rss' ? 'AI+RSS' : p.source === 'template' ? 'Template' : (p.source || '—');
+          return `<tr class="hl-row">
+            <td style="white-space:nowrap;color:var(--muted-foreground);font-size:0.75rem">${time}</td>
+            <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.tweet)}</td>
+            <td><span class="hl-source">${src}</span></td>
+            <td style="color:var(--muted-foreground);font-size:0.75rem">$${(p.cost_estimate || 0.013).toFixed(3)}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
     }
 
     loadStatus();
