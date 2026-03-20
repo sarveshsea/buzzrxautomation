@@ -44,7 +44,7 @@ class handler(BaseHTTPRequestHandler):
                 "total_templates": sum(template_counts.values()),
                 "new_headlines": len(headlines),
                 "headlines": [h["title"] for h in headlines[:10]],
-                "headlines_full": [{"title": h["title"], "source": h["source"]} for h in headlines[:20]],
+                "headlines_full": [{"title": h["title"], "source": h["source"], "link": h.get("link", ""), "image": h.get("image", "")} for h in headlines[:30]],
                 "config": {
                     "posts_per_day": config.posts_per_day,
                     "active_hours": config.active_hours,

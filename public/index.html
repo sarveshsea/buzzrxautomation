@@ -100,9 +100,31 @@
     .template-cat:last-child { border-bottom: none; }
     .template-cat-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
     .template-cat-header:hover { color: var(--accent); }
+
+    /* Toast notification */
+    .toast-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 999; display: flex; flex-direction: column; gap: 0.5rem; }
+    .toast { padding: 0.75rem 1.25rem; border-radius: var(--radius); font-size: 0.85rem; font-weight: 500; animation: slideIn 0.3s ease, fadeOut 0.3s ease 3.7s; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+    .toast.success { background: var(--green); color: #fff; }
+    .toast.error { background: var(--destructive); color: #fff; }
+    .toast.info { background: var(--accent); color: #000; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+    /* Queue image */
+    .q-img { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+    .q-body { flex: 1; min-width: 0; }
+
+    /* Headline link */
+    .hl-title a { color: var(--foreground); text-decoration: none; }
+    .hl-title a:hover { color: var(--accent); text-decoration: underline; }
+
+    /* Better queue button */
+    .btn-queue { background: var(--accent); color: #000; font-weight: 600; border: none; }
+    .btn-queue:hover:not(:disabled) { opacity: 0.85; }
   </style>
 </head>
 <body>
+  <div class="toast-container" id="toasts"></div>
   <div class="container">
     <nav class="nav">
       <div class="nav-left">
@@ -202,6 +224,8 @@
     const queuedSet = new Set();
     let activeFilter = 'all';
     let templateData = {};
+    // Store headline metadata for queue images
+    const headlineMeta = {};
 
     // Live clock
     function updateClock() {
@@ -213,6 +237,16 @@
     }
     updateClock();
     setInterval(updateClock, 1000);
+
+    // ── Toast notifications ──────────────────────────
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toasts');
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
 
     function appendLog(msg, cls = '') {
       const s = document.createElement('span');
@@ -233,6 +267,8 @@
       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     }
 
+    function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+
     // ── Balance ──────────────────────────────────────
     function renderBalance(usage) {
       if (!usage) return;
@@ -242,7 +278,7 @@
       const color = pct > 50 ? 'var(--green)' : pct > 20 ? 'var(--accent)' : 'var(--destructive)';
       document.getElementById('balanceValue').textContent = '$' + remaining.toFixed(2);
       document.getElementById('balanceDesc').textContent =
-        `${usage.total_posts} posts made · ~${usage.posts_remaining} remaining`;
+        `${usage.total_posts} posts · ~${usage.posts_remaining} left`;
       const bar = document.getElementById('balanceBar');
       bar.style.width = pct + '%';
       bar.style.background = color;
@@ -258,46 +294,55 @@
       el.innerHTML = queue.map((item, i) => {
         const time = getNextSlotTime(i);
         const isGenerating = item.status === 'pending' || item.status === 'generating';
+        const meta = headlineMeta[item.headline] || {};
+        const imgHtml = meta.image ? `<img class="q-img" src="${esc(meta.image)}" onerror="this.style.display='none'" alt="">` : '';
         return `<div class="q-item">
-          <div class="q-header">
-            <span class="q-num">${i + 1}</span>
-            <span class="q-headline">${esc(item.headline)}</span>
-            <span class="q-time">${formatTime(time)}</span>
-          </div>
-          ${isGenerating
-            ? '<div class="q-loading">Generating AI tweet...</div>'
-            : item.tweet
-              ? `<div class="q-tweet">${esc(item.tweet)}</div>`
-              : '<div class="q-loading">Waiting...</div>'
-          }
-          <div class="q-actions">
-            ${item.tweet && !isGenerating ? `<button class="btn btn-green btn-xs" onclick="postFromQueue(${item.id})">Post Now</button>` : ''}
-            ${item.tweet && !isGenerating ? `<button class="btn btn-outline btn-xs" onclick="regenerate(${item.id},'${esc(item.headline)}')">Regenerate</button>` : ''}
-            <button class="btn btn-outline btn-xs" onclick="removeFromQueue(${item.id})">Remove</button>
+          <div class="q-header" style="align-items:flex-start">
+            ${imgHtml}
+            <div class="q-body">
+              <div style="display:flex;align-items:center;gap:0.5rem">
+                <span class="q-num">${i + 1}</span>
+                <span class="q-headline" style="flex:1">${esc(item.headline)}</span>
+                <span class="q-time">${formatTime(time)}</span>
+              </div>
+              ${isGenerating
+                ? '<div class="q-loading">Generating AI tweet...</div>'
+                : item.tweet
+                  ? `<div class="q-tweet">${esc(item.tweet)}</div>`
+                  : '<div class="q-loading">Waiting...</div>'
+              }
+              <div class="q-actions">
+                ${item.tweet && !isGenerating ? `<button class="btn btn-green btn-xs" onclick="postFromQueue(${item.id})">Post Now</button>` : ''}
+                ${item.tweet && !isGenerating ? `<button class="btn btn-outline btn-xs" onclick="regenerateItem(${item.id})">Regenerate</button>` : ''}
+                <button class="btn btn-outline btn-xs" onclick="removeFromQueue(${item.id})">Remove</button>
+              </div>
+            </div>
           </div>
         </div>`;
       }).join('');
     }
 
-    function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
-
     async function addToQueue(headline) {
       if (queuedSet.has(headline)) return;
       queuedSet.add(headline);
       renderHeadlines(allHeadlines);
+      showToast('Adding to queue...', 'info');
       appendLog('$ adding to queue + generating AI tweet...', 'info');
       try {
         const res = await fetch('/api/queue?action=add&headline=' + encodeURIComponent(headline), { method: 'POST' });
         const data = await res.json();
         if (data.success && data.item) {
           queue.push(data.item);
+          showToast('Queued + AI tweet generated', 'success');
           appendLog('Queued: ' + (data.item.tweet || headline).substring(0, 80) + '...', 'success');
         } else {
           queuedSet.delete(headline);
+          showToast('Failed: ' + (data.error || 'unknown'), 'error');
           appendLog('Failed to queue: ' + (data.error || 'unknown'), 'error');
         }
       } catch (e) {
         queuedSet.delete(headline);
+        showToast('Error: ' + e.message, 'error');
         appendLog('Error: ' + e.message, 'error');
       }
       renderHeadlines(allHeadlines);
@@ -319,17 +364,20 @@
       renderQueue();
       renderHeadlines(allHeadlines);
       await fetch('/api/queue?action=clear', { method: 'POST' });
+      showToast('Queue cleared', 'info');
     }
 
-    async function regenerate(id, headline) {
+    async function regenerateItem(id) {
       const item = queue.find(q => q.id === id);
-      if (item) { item.status = 'generating'; item.tweet = null; }
+      if (!item) return;
+      item.status = 'generating';
+      item.tweet = null;
       renderQueue();
       try {
-        const res = await fetch('/api/queue?action=regenerate&id=' + id + '&headline=' + encodeURIComponent(headline), { method: 'POST' });
+        const res = await fetch('/api/queue?action=regenerate&id=' + id + '&headline=' + encodeURIComponent(item.headline), { method: 'POST' });
         const data = await res.json();
-        if (data.success && item) { item.tweet = data.tweet; item.status = 'ready'; }
-      } catch (e) { appendLog('Regenerate error: ' + e.message, 'error'); }
+        if (data.success) { item.tweet = data.tweet; item.status = 'ready'; showToast('Tweet regenerated', 'success'); }
+      } catch (e) { showToast('Regenerate failed', 'error'); }
       renderQueue();
     }
 
@@ -341,14 +389,16 @@
         const res = await fetch('/api/post?text=' + encodeURIComponent(item.tweet));
         const data = await res.json();
         if (data.success) {
+          showToast('Tweet posted!', 'success');
           appendLog('Posted!', 'success');
           appendLog(item.tweet);
           await removeFromQueue(id);
           refreshBalance();
         } else {
+          showToast('Post failed: ' + (data.error || 'unknown'), 'error');
           appendLog('Failed: ' + (data.error || 'unknown'), 'error');
         }
-      } catch (e) { appendLog('Error: ' + e.message, 'error'); }
+      } catch (e) { showToast('Error: ' + e.message, 'error'); }
     }
 
     async function postNextInQueue() {
@@ -367,6 +417,12 @@
     // ── Headlines ────────────────────────────────────
     function renderHeadlines(headlines) {
       allHeadlines = headlines;
+      // Cache metadata for queue images
+      headlines.forEach(h => {
+        if (typeof h === 'object' && h.title) {
+          headlineMeta[h.title] = { image: h.image || '', link: h.link || '', source: h.source || '' };
+        }
+      });
       buildChips(headlines);
       const filtered = activeFilter === 'all' ? headlines : headlines.filter(h => (typeof h === 'object' ? h.source : '') === activeFilter);
       const body = document.getElementById('hlBody');
@@ -379,13 +435,17 @@
       body.innerHTML = filtered.map(h => {
         const source = typeof h === 'object' ? h.source : '';
         const title = typeof h === 'object' ? h.title : h;
+        const link = typeof h === 'object' ? h.link : '';
         const isQueued = queuedSet.has(title);
+        const titleHtml = link
+          ? `<a href="${esc(link)}" target="_blank" rel="noopener">${esc(title)}</a>`
+          : esc(title);
         return `<tr class="hl-row">
           <td><span class="hl-source">${labels[source]||source}</span></td>
-          <td class="hl-title">${esc(title)}</td>
+          <td class="hl-title">${titleHtml}</td>
           <td style="text-align:right">${isQueued
             ? '<span class="hl-queued">Queued</span>'
-            : `<button class="btn btn-outline btn-xs" onclick="addToQueue(decodeURIComponent('${encodeURIComponent(title)}'))">+ Queue</button>`
+            : `<button class="btn btn-queue btn-xs" onclick="addToQueue(decodeURIComponent('${encodeURIComponent(title)}'))">+ Queue</button>`
           }</td>
         </tr>`;
       }).join('');
@@ -443,9 +503,16 @@
       try {
         const res = await fetch('/api/post');
         const data = await res.json();
-        if (data.success) { appendLog('Posted!', 'success'); appendLog(data.tweet); refreshBalance(); }
-        else appendLog('Failed: ' + (data.error || 'unknown'), 'error');
-      } catch (e) { appendLog('Error: ' + e.message, 'error'); }
+        if (data.success) {
+          showToast('Template tweet posted!', 'success');
+          appendLog('Posted!', 'success');
+          appendLog(data.tweet);
+          refreshBalance();
+        } else {
+          showToast('Failed: ' + (data.error || 'unknown'), 'error');
+          appendLog('Failed: ' + (data.error || 'unknown'), 'error');
+        }
+      } catch (e) { showToast('Error: ' + e.message, 'error'); }
       btn.disabled = false;
     }
 
@@ -457,12 +524,16 @@
         const res = await fetch('/api/post-now');
         const data = await res.json();
         if (data.success) {
+          showToast('AI tweet posted!', 'success');
           appendLog('Posted!', 'success');
           if (data.headline) appendLog('Re: ' + data.headline, 'info');
           appendLog(data.tweet);
           refreshBalance();
-        } else appendLog('Failed: ' + (data.error || 'unknown'), 'error');
-      } catch (e) { appendLog('Error: ' + e.message, 'error'); }
+        } else {
+          showToast('Failed: ' + (data.error || 'unknown'), 'error');
+          appendLog('Failed: ' + (data.error || 'unknown'), 'error');
+        }
+      } catch (e) { showToast('Error: ' + e.message, 'error'); }
       btn.disabled = false;
     }
 

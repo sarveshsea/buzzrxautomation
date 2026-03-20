@@ -106,12 +106,24 @@ class NewsReactor:
             try:
                 feed = feedparser.parse(url)
                 for entry in feed.entries[:max_per_feed]:
+                    # Extract image from media_content, media_thumbnail, or enclosures
+                    image = ""
+                    if hasattr(entry, "media_content") and entry.media_content:
+                        image = entry.media_content[0].get("url", "")
+                    elif hasattr(entry, "media_thumbnail") and entry.media_thumbnail:
+                        image = entry.media_thumbnail[0].get("url", "")
+                    elif hasattr(entry, "enclosures") and entry.enclosures:
+                        for enc in entry.enclosures:
+                            if enc.get("type", "").startswith("image"):
+                                image = enc.get("href", enc.get("url", ""))
+                                break
                     articles.append({
                         "id": self._article_id(entry),
                         "source": name,
                         "title": entry.get("title", ""),
                         "summary": entry.get("summary", "")[:200],
                         "link": entry.get("link", ""),
+                        "image": image,
                     })
             except Exception as e:
                 logger.error(f"Failed to fetch {name}: {e}")
