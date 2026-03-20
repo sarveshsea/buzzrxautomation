@@ -88,8 +88,27 @@ class NewsReactor:
         raw = (entry.get("title", "") + entry.get("link", "")).encode()
         return hashlib.md5(raw).hexdigest()
 
+    def fetch_headlines(self, max_per_feed=5):
+        """Fetch latest headlines from all RSS feeds (display only, doesn't mark as seen)."""
+        articles = []
+        for name, url in SPORTS_FEEDS.items():
+            try:
+                feed = feedparser.parse(url)
+                for entry in feed.entries[:max_per_feed]:
+                    articles.append({
+                        "id": self._article_id(entry),
+                        "source": name,
+                        "title": entry.get("title", ""),
+                        "summary": entry.get("summary", "")[:200],
+                        "link": entry.get("link", ""),
+                    })
+            except Exception as e:
+                logger.error(f"Failed to fetch {name}: {e}")
+        logger.info(f"Fetched {len(articles)} headlines across {len(SPORTS_FEEDS)} feeds.")
+        return articles
+
     def fetch_new_headlines(self, max_per_feed=3):
-        """Fetch new headlines from all RSS feeds."""
+        """Fetch new headlines and mark them as seen (for posting)."""
         new_articles = []
         for name, url in SPORTS_FEEDS.items():
             try:
@@ -107,7 +126,7 @@ class NewsReactor:
                         self.seen[aid] = datetime.now().isoformat()
             except Exception as e:
                 logger.error(f"Failed to fetch {name}: {e}")
-        
+
         self._save_seen()
         logger.info(f"Found {len(new_articles)} new articles across {len(SPORTS_FEEDS)} feeds.")
         return new_articles

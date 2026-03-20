@@ -17,6 +17,6 @@
         "#SportsTakes",
         "#RateTheGame"
     ],
-    "media_chance": 0.6,
+    "media_chance": 1.0,
     "dry_run": false
 }

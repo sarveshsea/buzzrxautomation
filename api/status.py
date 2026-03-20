@@ -25,7 +25,7 @@ class handler(BaseHTTPRequestHandler):
                 openrouter_api_key=config.openrouter_api_key,
                 model=config.openrouter_model,
             )
-            headlines = reactor.fetch_new_headlines()
+            headlines = reactor.fetch_headlines()
 
             self._respond(200, {
                 "status": "active" if creds_ok else "missing_credentials",
@@ -36,7 +36,8 @@ class handler(BaseHTTPRequestHandler):
                 "templates": template_counts,
                 "total_templates": sum(template_counts.values()),
                 "new_headlines": len(headlines),
-                "headlines": [h["title"] for h in headlines[:5]],
+                "headlines": [h["title"] for h in headlines[:10]],
+                "headlines_full": [{"title": h["title"], "source": h["source"]} for h in headlines[:20]],
                 "config": {
                     "posts_per_day": config.posts_per_day,
                     "active_hours": config.active_hours,
