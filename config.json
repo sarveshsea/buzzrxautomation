@@ -1,20 +1,18 @@
 {
-    "posts_per_day": 4,
+    "posts_per_day": 5,
     "active_hours": {
         "start": 9,
-        "end": 23
+        "end": 17
     },
+    "peak_hours": [9, 10, 11, 12, 13, 14],
     "content_mix": {
-        "promo": 0.30,
-        "features": 0.25,
-        "engagement": 0.30,
+        "promo": 0.20,
+        "features": 0.20,
+        "engagement": 0.45,
         "tips": 0.15
     },
     "hashtags": [
         "#Buzzr",
-        "#SportsApp",
-        "#GameDay",
-        "#SportsTakes",
         "#RateTheGame"
     ],
     "media_chance": 1.0,

@@ -1,6 +1,7 @@
 """Vercel serverless function — dashboard status endpoint."""
 from http.server import BaseHTTPRequestHandler
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -39,6 +40,7 @@ class handler(BaseHTTPRequestHandler):
                     "twitter": creds_ok,
                     "openrouter": bool(config.openrouter_api_key),
                     "supabase": HAS_SUPABASE,
+                    "threads": bool(os.getenv("THREADS_USER_ID") and os.getenv("THREADS_ACCESS_TOKEN")),
                 },
                 "templates": template_counts,
                 "total_templates": sum(template_counts.values()),

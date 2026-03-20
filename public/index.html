@@ -505,7 +505,8 @@
         if (data.credentials) creds.innerHTML = `
           <div class="row"><span class="row-label"><span class="status-dot ${data.credentials.twitter?'ok':'err'}"></span>Twitter/X</span><span class="row-value">${data.credentials.twitter?'Connected':'Missing'}</span></div>
           <div class="row"><span class="row-label"><span class="status-dot ${data.credentials.openrouter?'ok':'warn'}"></span>OpenRouter AI</span><span class="row-value">${data.credentials.openrouter?'Connected':'Optional'}</span></div>
-          <div class="row"><span class="row-label"><span class="status-dot ${data.credentials.supabase?'ok':'warn'}"></span>Supabase</span><span class="row-value">${data.credentials.supabase?'Connected':'Missing'}</span></div>`;
+          <div class="row"><span class="row-label"><span class="status-dot ${data.credentials.supabase?'ok':'warn'}"></span>Supabase</span><span class="row-value">${data.credentials.supabase?'Connected':'Missing'}</span></div>
+          <div class="row"><span class="row-label"><span class="status-dot ${data.credentials.threads?'ok':'warn'}"></span>Threads</span><span class="row-value">${data.credentials.threads?'Connected':'Not set'}</span></div>`;
 
         const cfg = document.getElementById('configInfo');
         if (data.config) cfg.innerHTML = `

@@ -2,7 +2,7 @@ name: Post Buzzr Tweet
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Every hour
+    - cron: '0 14,16,18,20,22 * * *'  # 5x/day at peak US engagement hours (9AM-5PM ET = 14-22 UTC)
   workflow_dispatch:  # Manual trigger button in GitHub UI
 
 jobs:
@@ -29,4 +29,6 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
         run: python bot.py react

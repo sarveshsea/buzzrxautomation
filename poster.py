@@ -1,8 +1,13 @@
-"""Twitter/X API poster using Tweepy v2 with media support."""
+"""Twitter/X API poster using Tweepy v2 with media support + Threads cross-post."""
 
 import logging
 import time
 import tweepy
+
+try:
+    from threads_poster import ThreadsPoster
+except Exception:
+    ThreadsPoster = None
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +19,7 @@ class TweetPoster:
         self.config = config
         self.client = None
         self.api_v1 = None
+        self.threads = ThreadsPoster() if ThreadsPoster else None
         self._setup_client()
 
     def _setup_client(self):
@@ -76,6 +82,15 @@ class TweetPoster:
             response = self.client.create_tweet(text=text, media_ids=media_ids)
             tweet_id = response.data["id"]
             logger.info(f"Tweet posted successfully! ID: {tweet_id}")
+
+            # Cross-post to Threads
+            if self.threads and self.threads.enabled:
+                t_ok, t_result = self.threads.post(text, dry_run=dry_run)
+                if t_ok:
+                    logger.info(f"Cross-posted to Threads: {t_result}")
+                else:
+                    logger.warning(f"Threads cross-post failed: {t_result}")
+
             return True, tweet_id
         except tweepy.TooManyRequests:
             logger.warning("Rate limit hit.")
