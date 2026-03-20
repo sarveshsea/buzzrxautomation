@@ -22,7 +22,12 @@ SPORTS_FEEDS = {
     "bleacher_report": "https://bleacherreport.com/articles/feed",
 }
 
-SEEN_FILE = Path(__file__).parent / ".seen_articles.json"
+# Use /tmp for serverless (Vercel), fallback to project dir locally
+try:
+    SEEN_FILE = Path("/tmp/.seen_articles.json")
+    SEEN_FILE.parent.mkdir(parents=True, exist_ok=True)
+except Exception:
+    SEEN_FILE = Path(__file__).parent / ".seen_articles.json"
 
 # The voice/style for AI-generated tweets
 SYSTEM_PROMPT = """You are a witty sports Twitter account promoting Buzzr, a sports rating app (like Letterboxd/Rotten Tomatoes for sports). 

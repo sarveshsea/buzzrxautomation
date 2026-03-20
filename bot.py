@@ -13,13 +13,15 @@ from poster import TweetPoster
 from scheduler import TweetScheduler
 
 # Setup logging
+_handlers = [logging.StreamHandler()]
+try:
+    _handlers.append(logging.FileHandler("bot.log"))
+except OSError:
+    pass  # Serverless — no writable filesystem
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[
-        logging.FileHandler("bot.log"),
-        logging.StreamHandler(),
-    ],
+    handlers=_handlers,
 )
 logger = logging.getLogger(__name__)
 
