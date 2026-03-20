@@ -339,6 +339,12 @@
       }).join('');
     }
 
+    function queueFromBtn(btn) {
+      const encoded = btn.getAttribute('data-headline');
+      const headline = decodeURIComponent(escape(atob(encoded)));
+      addToQueue(headline);
+    }
+
     async function addToQueue(headline) {
       if (queuedSet.has(headline)) return;
       queuedSet.add(headline);
@@ -459,12 +465,13 @@
           ? `<a href="${esc(link)}" target="_blank" rel="noopener">${esc(title)}</a>`
           : esc(title);
         const imgHtml = image ? `<img class="hl-img" src="${esc(image)}" onerror="this.style.display='none'" alt="">` : '';
+        const encodedTitle = btoa(unescape(encodeURIComponent(title)));
         return `<tr class="hl-row">
           <td><span class="hl-source">${labels[source]||source}</span>${imgHtml ? '<br>' + imgHtml : ''}</td>
           <td class="hl-title">${titleHtml}</td>
           <td style="text-align:right">${isQueued
             ? '<span class="hl-queued">Queued</span>'
-            : `<button class="btn btn-queue btn-xs" onclick="addToQueue(decodeURIComponent('${encodeURIComponent(title)}'))">+ Queue</button>`
+            : `<button class="btn btn-queue btn-xs" data-headline="${encodedTitle}" onclick="queueFromBtn(this)">+ Queue</button>`
           }</td>
         </tr>`;
       }).join('');
