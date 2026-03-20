@@ -1,5 +1,6 @@
 {
-    "posts_per_day": 5,
+    "posts_per_day": 8,
+    "spending_cap": 0.50,
     "active_hours": {
         "start": 9,
         "end": 17

@@ -12,9 +12,10 @@ from news import NewsReactor
 from poster import TweetPoster
 
 try:
-    from supabase_client import log_post
+    from supabase_client import log_post, check_spending_cap
 except Exception:
     log_post = None
+    check_spending_cap = None
 
 
 class handler(BaseHTTPRequestHandler):
@@ -23,6 +24,12 @@ class handler(BaseHTTPRequestHandler):
             config = Config()
             if not config.validate():
                 self._respond(500, {"error": "Missing Twitter API credentials", "success": False})
+                return
+
+            # Check spending cap
+            cap = config.settings.get("spending_cap", 0.50)
+            if check_spending_cap and not check_spending_cap(cap):
+                self._respond(200, {"success": False, "error": f"Spending cap hit (${cap:.2f} remaining). Add more credits."})
                 return
 
             poster = TweetPoster(config)

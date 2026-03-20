@@ -2,7 +2,7 @@ name: Post Buzzr Tweet
 
 on:
   schedule:
-    - cron: '0 14,16,18,20,22 * * *'  # 5x/day at peak US engagement hours (9AM-5PM ET = 14-22 UTC)
+    - cron: '0 13,14,15,16,17,18,20,22 * * *'  # 8x/day peak US hours (8AM-5PM ET = 13-22 UTC)
   workflow_dispatch:  # Manual trigger button in GitHub UI
 
 jobs:

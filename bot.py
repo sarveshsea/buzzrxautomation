@@ -13,9 +13,10 @@ from poster import TweetPoster
 from scheduler import TweetScheduler
 
 try:
-    from supabase_client import log_post
+    from supabase_client import log_post, check_spending_cap
 except Exception:
     log_post = None
+    check_spending_cap = None
 
 # Setup logging
 _handlers = [logging.StreamHandler()]
@@ -120,6 +121,12 @@ def cmd_react(args):
     if not dry_run and not config.validate():
         print("\n⚠️  Missing API credentials. Add them to your .env file.\n")
         sys.exit(1)
+
+    # Check spending cap
+    cap = config.settings.get("spending_cap", 0.50)
+    if not dry_run and check_spending_cap and not check_spending_cap(cap):
+        print(f"\n💰 Spending cap hit (${cap:.2f} remaining). Add more X API credits.\n")
+        sys.exit(0)
 
     reactor = NewsReactor(
         openrouter_api_key=config.openrouter_api_key,

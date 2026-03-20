@@ -127,3 +127,9 @@ def get_usage():
         "cost_per_post": cost_per,
         "posts_remaining": posts_remaining,
     }
+
+
+def check_spending_cap(cap=0.50):
+    """Returns True if balance is above the cap, False if we should stop posting."""
+    usage = get_usage()
+    return usage["remaining"] > cap
