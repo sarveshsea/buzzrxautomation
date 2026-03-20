@@ -33,14 +33,14 @@ class handler(BaseHTTPRequestHandler):
 
             # Try RSS + AI first
             tweet, article = reactor.get_reactive_tweet()
-            source = "ai_rss"
+            source = "cron_vercel"
 
             # Fallback to template if no news or no AI key
             if not tweet:
                 content = ContentGenerator(content_mix=config.content_mix, hashtags=config.hashtags)
                 tweet = content.generate()
                 article = None
-                source = "template"
+                source = "cron_vercel"
 
             success, result = poster.post(tweet)
 

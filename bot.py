@@ -12,6 +12,11 @@ from news import NewsReactor
 from poster import TweetPoster
 from scheduler import TweetScheduler
 
+try:
+    from supabase_client import log_post
+except Exception:
+    log_post = None
+
 # Setup logging
 _handlers = [logging.StreamHandler()]
 try:
@@ -74,6 +79,8 @@ def cmd_post(args):
         print(f"   📎 Media: {media_path.name}")
     print()
     success, result = poster.post(tweet, media_path=media_path, dry_run=dry_run)
+    if success and log_post and not dry_run:
+        log_post(tweet=tweet, source="template", tweet_id=result)
     if not success:
         print(f"❌ {result}")
         sys.exit(1)
@@ -134,6 +141,13 @@ def cmd_react(args):
         print(f"   📎 Media: {media_path.name}")
     print()
     success, result = poster.post(tweet, media_path=media_path, dry_run=dry_run)
+    if success and log_post and not dry_run:
+        log_post(
+            tweet=tweet,
+            headline=article["title"] if article else None,
+            source="cron_github",
+            tweet_id=result,
+        )
     if not success:
         print(f"❌ {result}")
         sys.exit(1)

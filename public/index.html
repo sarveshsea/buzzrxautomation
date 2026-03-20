@@ -606,11 +606,14 @@
       countEl.textContent = posts.length + ' recent';
       el.innerHTML = posts.map(p => {
         const time = new Date(p.posted_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
-        const src = p.source === 'ai_rss' ? 'AI+RSS' : p.source === 'template' ? 'Template' : (p.source || '—');
+        const srcMap = { 'ai_rss': 'AI+RSS', 'template': 'Template', 'cron_github': 'Cron', 'cron_vercel': 'Cron' };
+        const src = srcMap[p.source] || p.source || '—';
+        const isCron = (p.source || '').startsWith('cron');
+        const srcStyle = isCron ? 'background:rgba(34,197,94,0.15);color:var(--green);padding:0.1rem 0.4rem;border-radius:4px' : '';
         return `<div style="border-bottom:1px solid var(--border);padding:0.5rem 0">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem">
             <span style="font-size:0.7rem;color:var(--muted-foreground)">${time}</span>
-            <span class="hl-source">${src}</span>
+            <span class="hl-source" style="${srcStyle}">${src}</span>
           </div>
           <div style="font-size:0.8rem;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(p.tweet)}</div>
           ${p.headline ? `<div style="font-size:0.7rem;color:var(--muted-foreground);margin-top:0.2rem">Re: ${esc(p.headline)}</div>` : ''}
