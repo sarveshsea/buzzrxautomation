@@ -1,0 +1,51 @@
+"""Vercel serverless function — instant AI + RSS tweet post."""
+from http.server import BaseHTTPRequestHandler
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from config import Config
+from content import ContentGenerator
+from news import NewsReactor
+from poster import TweetPoster
+
+
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        config = Config()
+        if not config.validate():
+            self._respond(500, {"error": "Missing Twitter API credentials"})
+            return
+
+        poster = TweetPoster(config)
+        reactor = NewsReactor(
+            openrouter_api_key=config.openrouter_api_key,
+            model=config.openrouter_model,
+        )
+
+        # Try RSS + AI first
+        tweet, article = reactor.get_reactive_tweet()
+        source = "ai_rss"
+
+        # Fallback to template if no news or no AI key
+        if not tweet:
+            content = ContentGenerator(content_mix=config.content_mix, hashtags=config.hashtags)
+            tweet = content.generate()
+            article = None
+            source = "template"
+
+        success = poster.post(tweet)
+        self._respond(200 if success else 500, {
+            "success": success,
+            "tweet": tweet,
+            "source": source,
+            "headline": article["title"] if article else None,
+        })
+
+    def _respond(self, code, data):
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode())

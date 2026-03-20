@@ -107,6 +107,12 @@
     .btn-outline:hover { background: var(--muted); }
     .btn-accent { background: var(--accent); color: var(--accent-foreground); }
     .btn-accent:hover { opacity: 0.9; }
+    .btn-post-now {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff; font-weight: 600; padding: 0.5rem 1.5rem;
+      box-shadow: 0 0 20px rgba(34,197,94,0.3);
+    }
+    .btn-post-now:hover { box-shadow: 0 0 30px rgba(34,197,94,0.5); opacity: 0.95; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* Console */
@@ -181,10 +187,14 @@
       </div>
       <div class="card-content">
         <div class="btn-group">
-          <button class="btn btn-primary" id="btnPost" onclick="triggerPost()">Post Tweet</button>
+          <button class="btn btn-post-now" id="btnPostNow" onclick="triggerPostNow()">Post Now</button>
+          <button class="btn btn-primary" id="btnPost" onclick="triggerPost()">Post Template</button>
           <button class="btn btn-accent" id="btnReact" onclick="triggerReact()">React to News</button>
           <button class="btn btn-outline" onclick="loadStatus()">Refresh</button>
         </div>
+        <p style="margin-top:0.75rem;font-size:0.75rem;color:var(--muted-foreground);">
+          <strong>Post Now</strong> — scans RSS feeds, generates an AI tweet from the latest headline, and posts immediately.
+        </p>
         <div class="console" id="actionLog"><span class="info">$</span> ready</div>
       </div>
     </div>
@@ -263,6 +273,27 @@
         document.getElementById('statusBadge').className = 'badge error';
         document.getElementById('statusText').textContent = 'Offline';
       }
+    }
+
+    async function triggerPostNow() {
+      const btn = document.getElementById('btnPostNow');
+      btn.disabled = true;
+      appendLog('$ scanning RSS feeds + generating AI tweet...', 'info');
+      try {
+        const res = await fetch('/api/post-now');
+        const data = await res.json();
+        if (data.success) {
+          appendLog('POSTED', 'success');
+          if (data.headline) appendLog('Reacting to: ' + data.headline, 'info');
+          appendLog('Source: ' + (data.source === 'ai_rss' ? 'AI + RSS' : 'Template fallback'), 'info');
+          appendLog(data.tweet);
+        } else {
+          appendLog('Failed: ' + (data.error || 'unknown'), 'error');
+        }
+      } catch (e) {
+        appendLog('Error: ' + e.message, 'error');
+      }
+      btn.disabled = false;
     }
 
     async function triggerPost() {
