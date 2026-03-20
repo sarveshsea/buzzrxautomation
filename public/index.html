@@ -27,7 +27,8 @@
     .badge.active .dot { background: var(--green); }
     .badge.error .dot { background: var(--destructive); }
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 1024px) { .grid { grid-template-columns: repeat(2, 1fr) !important; } }
+    @media (max-width: 768px) { .grid { grid-template-columns: 1fr !important; } }
     .card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); overflow: hidden; }
     .card-header { padding: 1.25rem 1.5rem 0.75rem; display: flex; justify-content: space-between; align-items: center; }
     .card-title { font-size: 0.875rem; font-weight: 500; color: var(--muted-foreground); }
@@ -114,16 +115,26 @@
       </div>
     </nav>
 
-    <div class="grid">
+    <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="card">
+        <div class="card-header"><p class="card-title">X API Balance</p></div>
+        <div class="card-content" id="balanceCard">
+          <div class="stat-value" id="balanceValue">$—</div>
+          <div class="stat-desc" id="balanceDesc">Loading...</div>
+          <div style="margin-top:0.5rem;height:4px;background:var(--muted);border-radius:2px;overflow:hidden">
+            <div id="balanceBar" style="height:100%;background:var(--green);width:100%;transition:width 0.5s"></div>
+          </div>
+        </div>
+      </div>
       <div class="card">
         <div class="card-header">
           <div class="drilldown-header" onclick="toggleTemplates()">
-            <p class="card-title">Tweet Templates — <span id="totalTemplates">50</span></p>
+            <p class="card-title">Templates — <span id="totalTemplates">50</span></p>
             <span class="drilldown-arrow" id="tmplArrow">▶</span>
           </div>
         </div>
         <div class="card-content">
-          <div class="stat-desc">Pre-written tweets for "Post Template" button</div>
+          <div class="stat-desc">Pre-written tweets</div>
           <div class="drilldown-body" id="tmplDrill"></div>
         </div>
       </div>
@@ -187,7 +198,7 @@
   <script>
     const log = document.getElementById('actionLog');
     let allHeadlines = [];
-    let queue = []; // { headline, tweet, time, generating }
+    let queue = [];
     const queuedSet = new Set();
     let activeFilter = 'all';
     let templateData = {};
@@ -222,6 +233,22 @@
       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     }
 
+    // ── Balance ──────────────────────────────────────
+    function renderBalance(usage) {
+      if (!usage) return;
+      const remaining = usage.remaining || 0;
+      const initial = usage.initial_balance || 5;
+      const pct = Math.round((remaining / initial) * 100);
+      const color = pct > 50 ? 'var(--green)' : pct > 20 ? 'var(--accent)' : 'var(--destructive)';
+      document.getElementById('balanceValue').textContent = '$' + remaining.toFixed(2);
+      document.getElementById('balanceDesc').textContent =
+        `${usage.total_posts} posts made · ~${usage.posts_remaining} remaining`;
+      const bar = document.getElementById('balanceBar');
+      bar.style.width = pct + '%';
+      bar.style.background = color;
+    }
+
+    // ── Queue (Supabase-backed) ──────────────────────
     function renderQueue() {
       const el = document.getElementById('queueList');
       if (queue.length === 0) {
@@ -230,79 +257,84 @@
       }
       el.innerHTML = queue.map((item, i) => {
         const time = getNextSlotTime(i);
+        const isGenerating = item.status === 'pending' || item.status === 'generating';
         return `<div class="q-item">
           <div class="q-header">
             <span class="q-num">${i + 1}</span>
-            <span class="q-headline">${item.headline}</span>
+            <span class="q-headline">${esc(item.headline)}</span>
             <span class="q-time">${formatTime(time)}</span>
           </div>
-          ${item.generating
+          ${isGenerating
             ? '<div class="q-loading">Generating AI tweet...</div>'
             : item.tweet
-              ? `<div class="q-tweet">${item.tweet}</div>`
+              ? `<div class="q-tweet">${esc(item.tweet)}</div>`
               : '<div class="q-loading">Waiting...</div>'
           }
           <div class="q-actions">
-            ${item.tweet ? `<button class="btn btn-green btn-xs" onclick="postFromQueue(${i})">Post Now</button>` : ''}
-            ${item.tweet ? `<button class="btn btn-outline btn-xs" onclick="regenerate(${i})">Regenerate</button>` : ''}
-            <button class="btn btn-outline btn-xs" onclick="removeFromQueue(${i})">Remove</button>
-            ${i > 0 ? `<button class="btn btn-outline btn-xs" onclick="moveUp(${i})">Move Up</button>` : ''}
+            ${item.tweet && !isGenerating ? `<button class="btn btn-green btn-xs" onclick="postFromQueue(${item.id})">Post Now</button>` : ''}
+            ${item.tweet && !isGenerating ? `<button class="btn btn-outline btn-xs" onclick="regenerate(${item.id},'${esc(item.headline)}')">Regenerate</button>` : ''}
+            <button class="btn btn-outline btn-xs" onclick="removeFromQueue(${item.id})">Remove</button>
           </div>
         </div>`;
       }).join('');
     }
 
-    async function generateTweet(idx) {
-      queue[idx].generating = true;
-      renderQueue();
-      try {
-        const res = await fetch('/api/generate?headline=' + encodeURIComponent(queue[idx].headline));
-        const data = await res.json();
-        queue[idx].tweet = data.tweet || 'Failed to generate';
-      } catch (e) {
-        queue[idx].tweet = 'Error: ' + e.message;
-      }
-      queue[idx].generating = false;
-      renderQueue();
-    }
+    function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
 
     async function addToQueue(headline) {
       if (queuedSet.has(headline)) return;
       queuedSet.add(headline);
-      const idx = queue.length;
-      queue.push({ headline, tweet: null, generating: false });
+      renderHeadlines(allHeadlines);
+      appendLog('$ adding to queue + generating AI tweet...', 'info');
+      try {
+        const res = await fetch('/api/queue?action=add&headline=' + encodeURIComponent(headline), { method: 'POST' });
+        const data = await res.json();
+        if (data.success && data.item) {
+          queue.push(data.item);
+          appendLog('Queued: ' + (data.item.tweet || headline).substring(0, 80) + '...', 'success');
+        } else {
+          queuedSet.delete(headline);
+          appendLog('Failed to queue: ' + (data.error || 'unknown'), 'error');
+        }
+      } catch (e) {
+        queuedSet.delete(headline);
+        appendLog('Error: ' + e.message, 'error');
+      }
       renderHeadlines(allHeadlines);
       renderQueue();
-      await generateTweet(idx);
     }
 
-    function removeFromQueue(i) {
-      queuedSet.delete(queue[i].headline);
-      queue.splice(i, 1);
-      renderHeadlines(allHeadlines);
+    async function removeFromQueue(id) {
+      const item = queue.find(q => q.id === id);
+      if (item) queuedSet.delete(item.headline);
+      queue = queue.filter(q => q.id !== id);
       renderQueue();
+      renderHeadlines(allHeadlines);
+      await fetch('/api/queue?action=remove&id=' + id, { method: 'POST' });
     }
 
-    function clearQueue() {
+    async function clearQueue() {
       queue = [];
       queuedSet.clear();
+      renderQueue();
       renderHeadlines(allHeadlines);
+      await fetch('/api/queue?action=clear', { method: 'POST' });
+    }
+
+    async function regenerate(id, headline) {
+      const item = queue.find(q => q.id === id);
+      if (item) { item.status = 'generating'; item.tweet = null; }
+      renderQueue();
+      try {
+        const res = await fetch('/api/queue?action=regenerate&id=' + id + '&headline=' + encodeURIComponent(headline), { method: 'POST' });
+        const data = await res.json();
+        if (data.success && item) { item.tweet = data.tweet; item.status = 'ready'; }
+      } catch (e) { appendLog('Regenerate error: ' + e.message, 'error'); }
       renderQueue();
     }
 
-    function moveUp(i) {
-      if (i <= 0) return;
-      [queue[i-1], queue[i]] = [queue[i], queue[i-1]];
-      renderQueue();
-    }
-
-    async function regenerate(i) {
-      queue[i].tweet = null;
-      await generateTweet(i);
-    }
-
-    async function postFromQueue(i) {
-      const item = queue[i];
+    async function postFromQueue(id) {
+      const item = queue.find(q => q.id === id);
       if (!item || !item.tweet) return;
       appendLog('$ posting queued tweet...', 'info');
       try {
@@ -311,7 +343,8 @@
         if (data.success) {
           appendLog('Posted!', 'success');
           appendLog(item.tweet);
-          removeFromQueue(i);
+          await removeFromQueue(id);
+          refreshBalance();
         } else {
           appendLog('Failed: ' + (data.error || 'unknown'), 'error');
         }
@@ -320,9 +353,18 @@
 
     async function postNextInQueue() {
       if (queue.length === 0 || !queue[0].tweet) return;
-      await postFromQueue(0);
+      await postFromQueue(queue[0].id);
     }
 
+    async function refreshBalance() {
+      try {
+        const res = await fetch('/api/queue');
+        const data = await res.json();
+        if (data.usage) renderBalance(data.usage);
+      } catch {}
+    }
+
+    // ── Headlines ────────────────────────────────────
     function renderHeadlines(headlines) {
       allHeadlines = headlines;
       buildChips(headlines);
@@ -334,21 +376,22 @@
         return;
       }
       const labels = { 'espn_top': 'ESPN', 'espn_nba': 'NBA', 'espn_nfl': 'NFL', 'espn_mlb': 'MLB', 'espn_nhl': 'NHL', 'espn_soccer': 'Soccer', 'espn_mma': 'MMA', 'espn_ncaab': 'NCAAB', 'espn_ncaaf': 'NCAAF', 'bleacher_report': 'B/R', 'cbssports': 'CBS', 'yahoo_sports': 'Yahoo' };
-      body.innerHTML = filtered.map((h, i) => {
+      body.innerHTML = filtered.map(h => {
         const source = typeof h === 'object' ? h.source : '';
         const title = typeof h === 'object' ? h.title : h;
         const isQueued = queuedSet.has(title);
         return `<tr class="hl-row">
           <td><span class="hl-source">${labels[source]||source}</span></td>
-          <td class="hl-title">${title}</td>
+          <td class="hl-title">${esc(title)}</td>
           <td style="text-align:right">${isQueued
             ? '<span class="hl-queued">Queued</span>'
-            : `<button class="btn btn-outline btn-xs" onclick="addToQueue('${title.replace(/'/g, "\\'")}')">+ Queue</button>`
+            : `<button class="btn btn-outline btn-xs" onclick="addToQueue(decodeURIComponent('${encodeURIComponent(title)}'))">+ Queue</button>`
           }</td>
         </tr>`;
       }).join('');
     }
 
+    // ── Load status ──────────────────────────────────
     async function loadStatus() {
       try {
         const res = await fetch('/api/status');
@@ -361,10 +404,22 @@
         document.getElementById('totalTemplates').textContent = data.total_templates || '—';
         if (data.templates) templateData = data.templates;
 
+        // Balance
+        if (data.usage) renderBalance(data.usage);
+
+        // Queue from Supabase
+        if (data.queue) {
+          queue = data.queue;
+          queuedSet.clear();
+          queue.forEach(q => queuedSet.add(q.headline));
+          renderQueue();
+        }
+
         const creds = document.getElementById('credStatus');
         if (data.credentials) creds.innerHTML = `
           <div class="row"><span class="row-label"><span class="status-dot ${data.credentials.twitter?'ok':'err'}"></span>Twitter/X</span><span class="row-value">${data.credentials.twitter?'Connected':'Missing'}</span></div>
-          <div class="row"><span class="row-label"><span class="status-dot ${data.credentials.openrouter?'ok':'warn'}"></span>OpenRouter AI</span><span class="row-value">${data.credentials.openrouter?'Connected':'Optional'}</span></div>`;
+          <div class="row"><span class="row-label"><span class="status-dot ${data.credentials.openrouter?'ok':'warn'}"></span>OpenRouter AI</span><span class="row-value">${data.credentials.openrouter?'Connected':'Optional'}</span></div>
+          <div class="row"><span class="row-label"><span class="status-dot ${data.credentials.supabase?'ok':'warn'}"></span>Supabase</span><span class="row-value">${data.credentials.supabase?'Connected':'Missing'}</span></div>`;
 
         const cfg = document.getElementById('configInfo');
         if (data.config) cfg.innerHTML = `
@@ -388,7 +443,7 @@
       try {
         const res = await fetch('/api/post');
         const data = await res.json();
-        if (data.success) { appendLog('Posted!', 'success'); appendLog(data.tweet); }
+        if (data.success) { appendLog('Posted!', 'success'); appendLog(data.tweet); refreshBalance(); }
         else appendLog('Failed: ' + (data.error || 'unknown'), 'error');
       } catch (e) { appendLog('Error: ' + e.message, 'error'); }
       btn.disabled = false;
@@ -405,6 +460,7 @@
           appendLog('Posted!', 'success');
           if (data.headline) appendLog('Re: ' + data.headline, 'info');
           appendLog(data.tweet);
+          refreshBalance();
         } else appendLog('Failed: ' + (data.error || 'unknown'), 'error');
       } catch (e) { appendLog('Error: ' + e.message, 'error'); }
       btn.disabled = false;

@@ -1,14 +1,21 @@
-"""Vercel serverless function — post a scheduled tweet."""
+"""Vercel serverless function — post a template tweet."""
 from http.server import BaseHTTPRequestHandler
 import json
 import sys
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent))
 
 from config import Config
 from content import ContentGenerator
 from poster import TweetPoster
+
+try:
+    from supabase_client import log_post
+except Exception:
+    log_post = None
 
 
 class handler(BaseHTTPRequestHandler):
@@ -19,15 +26,26 @@ class handler(BaseHTTPRequestHandler):
                 self._respond(500, {"error": "Missing Twitter API credentials", "success": False})
                 return
 
-            content = ContentGenerator(content_mix=config.content_mix, hashtags=config.hashtags)
+            query = parse_qs(urlparse(self.path).query)
+            text = query.get("text", [None])[0]
+
             poster = TweetPoster(config)
-            tweet = content.generate()
+
+            if text:
+                tweet = text
+            else:
+                content = ContentGenerator(content_mix=config.content_mix, hashtags=config.hashtags)
+                tweet = content.generate()
+
             success, result = poster.post(tweet)
+
+            if success and log_post:
+                log_post(tweet=tweet, source="template", tweet_id=result)
 
             self._respond(200 if success else 500, {
                 "success": success,
                 "tweet": tweet,
-                "type": "scheduled",
+                "type": "template",
                 "error": None if success else result,
             })
         except Exception as e:

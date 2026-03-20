@@ -5,11 +5,17 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent))
 
 from config import Config
 from content import ContentGenerator
 from news import NewsReactor
 from poster import TweetPoster
+
+try:
+    from supabase_client import log_post
+except Exception:
+    log_post = None
 
 
 class handler(BaseHTTPRequestHandler):
@@ -38,6 +44,15 @@ class handler(BaseHTTPRequestHandler):
                 source = "template"
 
             success, result = poster.post(tweet)
+
+            if success and log_post:
+                log_post(
+                    tweet=tweet,
+                    headline=article["title"] if article else None,
+                    source=source,
+                    tweet_id=result,
+                )
+
             self._respond(200 if success else 500, {
                 "success": success,
                 "tweet": tweet,
