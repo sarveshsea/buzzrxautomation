@@ -20,6 +20,8 @@
     .nav { display: flex; align-items: center; justify-content: space-between; padding-bottom: 2rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
     .nav-left { display: flex; align-items: center; gap: 0.75rem; }
     .nav h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.025em; }
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+    .clock { font-size: 0.8rem; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
     .badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; border: 1px solid var(--border); }
     .badge .dot { width: 6px; height: 6px; border-radius: 50%; }
     .badge.active .dot { background: var(--green); }
@@ -44,43 +46,59 @@
     .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; padding: 0.5rem 1rem; border-radius: var(--radius); font-size: 0.875rem; font-weight: 500; font-family: inherit; cursor: pointer; border: none; transition: all 0.15s; height: 2.25rem; }
     .btn-primary { background: var(--foreground); color: var(--background); }
-    .btn-primary:hover { opacity: 0.9; }
     .btn-outline { background: transparent; color: var(--foreground); border: 1px solid var(--border); }
     .btn-outline:hover { background: var(--muted); }
     .btn-accent { background: var(--accent); color: var(--accent-foreground); }
-    .btn-accent:hover { opacity: 0.9; }
     .btn-green { background: var(--green); color: #fff; font-weight: 600; }
-    .btn-green:hover { opacity: 0.9; }
     .btn-sm { height: 1.75rem; padding: 0.25rem 0.625rem; font-size: 0.75rem; }
+    .btn-xs { height: 1.5rem; padding: 0.125rem 0.5rem; font-size: 0.7rem; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:hover:not(:disabled) { opacity: 0.9; }
     .console { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-top: 1rem; font-family: 'SF Mono', 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6; max-height: 200px; overflow-y: auto; color: var(--muted-foreground); white-space: pre-wrap; }
     .console .success { color: var(--green); }
     .console .error { color: var(--destructive); }
     .console .info { color: var(--accent); }
-
-    /* Headlines table */
     .hl-table { width: 100%; border-collapse: collapse; }
-    .hl-table th { text-align: left; font-size: 0.75rem; font-weight: 500; color: var(--muted-foreground); padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; }
-    .hl-row { border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+    .hl-table th { text-align: left; font-size: 0.7rem; font-weight: 500; color: var(--muted-foreground); padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; }
+    .hl-row { border-bottom: 1px solid var(--border); transition: background 0.1s; }
     .hl-row:hover { background: rgba(255,255,255,0.03); }
-    .hl-row.selected { background: rgba(245,166,35,0.08); border-left: 2px solid var(--accent); }
-    .hl-row td { padding: 0.6rem 0.75rem; font-size: 0.8rem; vertical-align: middle; }
-    .hl-source { color: var(--muted-foreground); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
+    .hl-row td { padding: 0.5rem 0.75rem; font-size: 0.8rem; vertical-align: middle; }
+    .hl-source { color: var(--muted-foreground); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
     .hl-title { color: var(--foreground); line-height: 1.4; }
-    .hl-actions { white-space: nowrap; text-align: right; }
-
-    /* Queue */
-    .queue-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
-    .queue-item:last-child { border-bottom: none; }
-    .queue-num { color: var(--muted-foreground); font-weight: 600; min-width: 1.5rem; }
-    .queue-text { flex: 1; line-height: 1.5; color: var(--muted-foreground); }
-    .queue-badge { font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 500; white-space: nowrap; }
-    .queue-badge.template { background: #1e293b; color: #94a3b8; }
-    .queue-badge.rss { background: #1a2e1a; color: #4ade80; }
-    .queue-empty { color: #52525b; font-size: 0.8rem; padding: 1rem 0; }
-
+    .hl-queued { color: var(--accent); font-size: 0.7rem; font-weight: 500; }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
     @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+    .q-item { border-bottom: 1px solid var(--border); padding: 0.75rem 0; }
+    .q-item:last-child { border-bottom: none; }
+    .q-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.375rem; }
+    .q-num { color: var(--muted-foreground); font-weight: 600; font-size: 0.75rem; min-width: 1.25rem; }
+    .q-headline { font-size: 0.75rem; color: var(--muted-foreground); flex: 1; }
+    .q-time { font-size: 0.65rem; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .q-tweet { font-size: 0.8rem; line-height: 1.5; margin-top: 0.25rem; padding: 0.5rem; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px solid var(--border); }
+    .q-loading { font-size: 0.75rem; color: var(--muted-foreground); font-style: italic; }
+    .q-actions { display: flex; gap: 0.375rem; margin-top: 0.375rem; }
+    .q-empty { color: #52525b; font-size: 0.8rem; padding: 1rem 0; }
+
+    /* Chips */
+    .chips { display: flex; gap: 0.375rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .chip { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; border: 1px solid var(--border); background: transparent; color: var(--muted-foreground); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .chip.active { background: var(--foreground); color: var(--background); border-color: var(--foreground); }
+    .chip:hover:not(.active) { background: var(--muted); }
+
+    /* Drilldown */
+    .drilldown-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .drilldown-header:hover { opacity: 0.8; }
+    .drilldown-arrow { font-size: 0.75rem; color: var(--muted-foreground); transition: transform 0.2s; }
+    .drilldown-arrow.open { transform: rotate(90deg); }
+    .drilldown-body { display: none; margin-top: 0.5rem; }
+    .drilldown-body.open { display: block; }
+    .template-item { font-size: 0.75rem; color: var(--muted-foreground); padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); line-height: 1.4; }
+    .template-item:last-child { border-bottom: none; }
+    .template-cat { cursor: pointer; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+    .template-cat:last-child { border-bottom: none; }
+    .template-cat-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+    .template-cat-header:hover { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -90,16 +108,23 @@
         <span style="font-size:1.5rem">🐝</span>
         <h1>Buzzr Tweet Bot</h1>
       </div>
-      <span class="badge active" id="statusBadge"><span class="dot"></span><span id="statusText">Loading</span></span>
+      <div class="nav-right">
+        <span class="clock" id="liveClock"></span>
+        <span class="badge active" id="statusBadge"><span class="dot"></span><span id="statusText">Loading</span></span>
+      </div>
     </nav>
 
     <div class="grid">
       <div class="card">
-        <div class="card-header"><p class="card-title">Tweet Templates</p></div>
+        <div class="card-header">
+          <div class="drilldown-header" onclick="toggleTemplates()">
+            <p class="card-title">Tweet Templates — <span id="totalTemplates">50</span></p>
+            <span class="drilldown-arrow" id="tmplArrow">▶</span>
+          </div>
+        </div>
         <div class="card-content">
-          <div class="stat-value" id="totalTemplates">—</div>
-          <div class="stat-desc">unique tweets loaded</div>
-          <div style="margin-top:1rem" id="templateBreakdown"></div>
+          <div class="stat-desc">Pre-written tweets for "Post Template" button</div>
+          <div class="drilldown-body" id="tmplDrill"></div>
         </div>
       </div>
       <div class="card">
@@ -119,8 +144,7 @@
         <div class="btn-group">
           <button class="btn btn-primary" id="btnPost" onclick="triggerPost()">Post Template</button>
           <button class="btn btn-green" id="btnReact" onclick="triggerReact()">Post from RSS + AI</button>
-          <button class="btn btn-accent btn-sm" id="btnPostSelected" onclick="postSelected()" style="display:none">Post Selected Headline</button>
-          <button class="btn btn-outline" onclick="loadStatus()">Refresh</button>
+          <button class="btn btn-outline" onclick="loadStatus()">Refresh Feeds</button>
         </div>
         <div class="console" id="actionLog"><span class="info">$</span> ready</div>
       </div>
@@ -134,6 +158,7 @@
           <span style="font-size:0.7rem;color:var(--muted-foreground)" id="hlCount"></span>
         </div>
         <div class="card-content">
+          <div class="chips" id="sourceChips"></div>
           <div style="overflow-x:auto">
             <table class="hl-table">
               <thead><tr><th>Source</th><th>Headline</th><th></th></tr></thead>
@@ -147,10 +172,13 @@
       <div class="card">
         <div class="card-header">
           <p class="card-title">Tweet Queue</p>
-          <button class="btn btn-outline btn-sm" onclick="clearQueue()">Clear</button>
+          <div style="display:flex;gap:0.375rem">
+            <button class="btn btn-green btn-sm" onclick="postNextInQueue()" id="btnPostQueue">Post Next</button>
+            <button class="btn btn-outline btn-sm" onclick="clearQueue()">Clear</button>
+          </div>
         </div>
         <div class="card-content" id="queueList">
-          <div class="queue-empty">Queue is empty. Add headlines or templates.</div>
+          <div class="q-empty">Add headlines from the feed to generate AI tweets.</div>
         </div>
       </div>
     </div>
@@ -158,9 +186,22 @@
 
   <script>
     const log = document.getElementById('actionLog');
-    let selectedHeadline = null;
     let allHeadlines = [];
-    let queue = [];
+    let queue = []; // { headline, tweet, time, generating }
+    const queuedSet = new Set();
+    let activeFilter = 'all';
+    let templateData = {};
+
+    // Live clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('liveClock').textContent = now.toLocaleString('en-US', {
+        weekday: 'short', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+      });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
 
     function appendLog(msg, cls = '') {
       const s = document.createElement('span');
@@ -170,78 +211,140 @@
       log.scrollTop = log.scrollHeight;
     }
 
+    function getNextSlotTime(offset) {
+      const now = new Date();
+      now.setMinutes(0, 0, 0);
+      now.setHours(now.getHours() + 1 + offset);
+      return now;
+    }
+
+    function formatTime(date) {
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
     function renderQueue() {
       const el = document.getElementById('queueList');
       if (queue.length === 0) {
-        el.innerHTML = '<div class="queue-empty">Queue is empty. Click headlines to add them.</div>';
+        el.innerHTML = '<div class="q-empty">Add headlines from the feed to generate AI tweets.</div>';
         return;
       }
-      el.innerHTML = queue.map((item, i) => `
-        <div class="queue-item">
-          <span class="queue-num">${i + 1}</span>
-          <span class="queue-text">${item.text}</span>
-          <span class="queue-badge ${item.type}">${item.type === 'rss' ? 'RSS' : 'Template'}</span>
-          <button class="btn btn-outline btn-sm" onclick="removeFromQueue(${i})" style="margin-left:0.5rem">x</button>
-        </div>
-      `).join('');
+      el.innerHTML = queue.map((item, i) => {
+        const time = getNextSlotTime(i);
+        return `<div class="q-item">
+          <div class="q-header">
+            <span class="q-num">${i + 1}</span>
+            <span class="q-headline">${item.headline}</span>
+            <span class="q-time">${formatTime(time)}</span>
+          </div>
+          ${item.generating
+            ? '<div class="q-loading">Generating AI tweet...</div>'
+            : item.tweet
+              ? `<div class="q-tweet">${item.tweet}</div>`
+              : '<div class="q-loading">Waiting...</div>'
+          }
+          <div class="q-actions">
+            ${item.tweet ? `<button class="btn btn-green btn-xs" onclick="postFromQueue(${i})">Post Now</button>` : ''}
+            ${item.tweet ? `<button class="btn btn-outline btn-xs" onclick="regenerate(${i})">Regenerate</button>` : ''}
+            <button class="btn btn-outline btn-xs" onclick="removeFromQueue(${i})">Remove</button>
+            ${i > 0 ? `<button class="btn btn-outline btn-xs" onclick="moveUp(${i})">Move Up</button>` : ''}
+          </div>
+        </div>`;
+      }).join('');
     }
 
-    function addToQueue(headline) {
-      queue.push({ text: headline, type: 'rss' });
+    async function generateTweet(idx) {
+      queue[idx].generating = true;
+      renderQueue();
+      try {
+        const res = await fetch('/api/generate?headline=' + encodeURIComponent(queue[idx].headline));
+        const data = await res.json();
+        queue[idx].tweet = data.tweet || 'Failed to generate';
+      } catch (e) {
+        queue[idx].tweet = 'Error: ' + e.message;
+      }
+      queue[idx].generating = false;
       renderQueue();
     }
 
+    async function addToQueue(headline) {
+      if (queuedSet.has(headline)) return;
+      queuedSet.add(headline);
+      const idx = queue.length;
+      queue.push({ headline, tweet: null, generating: false });
+      renderHeadlines(allHeadlines);
+      renderQueue();
+      await generateTweet(idx);
+    }
+
     function removeFromQueue(i) {
+      queuedSet.delete(queue[i].headline);
       queue.splice(i, 1);
+      renderHeadlines(allHeadlines);
       renderQueue();
     }
 
     function clearQueue() {
       queue = [];
+      queuedSet.clear();
+      renderHeadlines(allHeadlines);
       renderQueue();
     }
 
-    function selectHeadline(idx) {
-      selectedHeadline = allHeadlines[idx];
-      document.querySelectorAll('.hl-row').forEach((r, i) => r.classList.toggle('selected', i === idx));
-      document.getElementById('btnPostSelected').style.display = 'inline-flex';
+    function moveUp(i) {
+      if (i <= 0) return;
+      [queue[i-1], queue[i]] = [queue[i], queue[i-1]];
+      renderQueue();
     }
 
-    async function postSelected() {
-      if (!selectedHeadline) return;
-      const btn = document.getElementById('btnPostSelected');
-      btn.disabled = true;
-      appendLog('$ generating AI tweet for: ' + selectedHeadline, 'info');
+    async function regenerate(i) {
+      queue[i].tweet = null;
+      await generateTweet(i);
+    }
+
+    async function postFromQueue(i) {
+      const item = queue[i];
+      if (!item || !item.tweet) return;
+      appendLog('$ posting queued tweet...', 'info');
       try {
-        const res = await fetch('/api/react');
+        const res = await fetch('/api/post?text=' + encodeURIComponent(item.tweet));
         const data = await res.json();
-        if (data.success !== false) {
+        if (data.success) {
           appendLog('Posted!', 'success');
-          appendLog(data.tweet || data.message || 'Done');
+          appendLog(item.tweet);
+          removeFromQueue(i);
         } else {
           appendLog('Failed: ' + (data.error || 'unknown'), 'error');
         }
-      } catch (e) {
-        appendLog('Error: ' + e.message, 'error');
-      }
-      btn.disabled = false;
+      } catch (e) { appendLog('Error: ' + e.message, 'error'); }
+    }
+
+    async function postNextInQueue() {
+      if (queue.length === 0 || !queue[0].tweet) return;
+      await postFromQueue(0);
     }
 
     function renderHeadlines(headlines) {
       allHeadlines = headlines;
+      buildChips(headlines);
+      const filtered = activeFilter === 'all' ? headlines : headlines.filter(h => (typeof h === 'object' ? h.source : '') === activeFilter);
       const body = document.getElementById('hlBody');
-      document.getElementById('hlCount').textContent = headlines.length + ' articles';
-      if (!headlines.length) {
+      document.getElementById('hlCount').textContent = filtered.length + '/' + headlines.length + ' articles';
+      if (!filtered.length) {
         body.innerHTML = '<tr><td colspan="3" style="color:#52525b;padding:1rem 0.75rem;font-size:0.8rem">No headlines found</td></tr>';
         return;
       }
-      body.innerHTML = headlines.map((h, i) => {
-        const source = typeof h === 'object' ? (h.source || '').replace('espn_', 'ESPN ').replace('bleacher_report', 'B/R') : '';
+      const labels = { 'espn_top': 'ESPN', 'espn_nba': 'NBA', 'espn_nfl': 'NFL', 'espn_mlb': 'MLB', 'espn_nhl': 'NHL', 'espn_soccer': 'Soccer', 'espn_mma': 'MMA', 'espn_ncaab': 'NCAAB', 'espn_ncaaf': 'NCAAF', 'bleacher_report': 'B/R', 'cbssports': 'CBS', 'yahoo_sports': 'Yahoo' };
+      body.innerHTML = filtered.map((h, i) => {
+        const source = typeof h === 'object' ? h.source : '';
         const title = typeof h === 'object' ? h.title : h;
-        return `<tr class="hl-row" onclick="selectHeadline(${i})">
-          <td><span class="hl-source">${source}</span></td>
+        const isQueued = queuedSet.has(title);
+        return `<tr class="hl-row">
+          <td><span class="hl-source">${labels[source]||source}</span></td>
           <td class="hl-title">${title}</td>
-          <td class="hl-actions"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();addToQueue('${title.replace(/'/g, "\\'")}')">+ Queue</button></td>
+          <td style="text-align:right">${isQueued
+            ? '<span class="hl-queued">Queued</span>'
+            : `<button class="btn btn-outline btn-xs" onclick="addToQueue('${title.replace(/'/g, "\\'")}')">+ Queue</button>`
+          }</td>
         </tr>`;
       }).join('');
     }
@@ -256,8 +359,7 @@
         statusText.textContent = data.status === 'active' ? 'Active' : 'Setup needed';
 
         document.getElementById('totalTemplates').textContent = data.total_templates || '—';
-        const bd = document.getElementById('templateBreakdown');
-        if (data.templates) bd.innerHTML = Object.entries(data.templates).map(([k,v]) => `<div class="row"><span class="row-label">${k}</span><span class="row-value">${v}</span></div>`).join('');
+        if (data.templates) templateData = data.templates;
 
         const creds = document.getElementById('credStatus');
         if (data.credentials) creds.innerHTML = `
@@ -270,13 +372,9 @@
           <div class="row"><span class="row-label">Active hours</span><span class="row-value">${data.config.active_hours.start}:00–${data.config.active_hours.end}:00</span></div>
           <div class="row"><span class="row-label">Media attach</span><span class="row-value">${Math.round(data.config.media_chance*100)}%</span></div>`;
 
-        if (data.headlines_full && data.headlines_full.length > 0) {
-          renderHeadlines(data.headlines_full);
-        } else if (data.headlines && data.headlines.length > 0) {
-          renderHeadlines(data.headlines.map(h => ({title: h, source: ''})));
-        } else {
-          renderHeadlines([]);
-        }
+        if (data.headlines_full && data.headlines_full.length > 0) renderHeadlines(data.headlines_full);
+        else if (data.headlines && data.headlines.length > 0) renderHeadlines(data.headlines.map(h => ({title: h, source: ''})));
+        else renderHeadlines([]);
       } catch (e) {
         document.getElementById('statusBadge').className = 'badge error';
         document.getElementById('statusText').textContent = 'Offline';
@@ -306,11 +404,45 @@
         if (data.success) {
           appendLog('Posted!', 'success');
           if (data.headline) appendLog('Re: ' + data.headline, 'info');
-          appendLog('Source: ' + (data.source === 'ai_rss' ? 'AI + RSS' : 'Template fallback'), 'info');
           appendLog(data.tweet);
         } else appendLog('Failed: ' + (data.error || 'unknown'), 'error');
       } catch (e) { appendLog('Error: ' + e.message, 'error'); }
       btn.disabled = false;
+    }
+
+    // Template drilldown
+    function toggleTemplates() {
+      const drill = document.getElementById('tmplDrill');
+      const arrow = document.getElementById('tmplArrow');
+      const isOpen = drill.classList.contains('open');
+      drill.classList.toggle('open');
+      arrow.classList.toggle('open');
+      if (!isOpen && Object.keys(templateData).length > 0) {
+        drill.innerHTML = Object.entries(templateData).map(([cat, count]) =>
+          `<div class="template-cat" onclick="this.querySelector('.drilldown-body').classList.toggle('open');this.querySelector('.drilldown-arrow').classList.toggle('open')">
+            <div class="template-cat-header"><span>${cat} (${count})</span><span class="drilldown-arrow">▶</span></div>
+            <div class="drilldown-body"><div class="template-item" style="color:#52525b">Click "Post Template" to use these</div></div>
+          </div>`
+        ).join('');
+      }
+    }
+
+    // Chip filters
+    function setFilter(source) {
+      activeFilter = source;
+      document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.source === source));
+      renderHeadlines(allHeadlines);
+    }
+
+    function buildChips(headlines) {
+      const sources = new Set(headlines.map(h => typeof h === 'object' ? h.source : ''));
+      const chips = document.getElementById('sourceChips');
+      const labels = { 'all': 'All', 'espn_top': 'ESPN', 'espn_nba': 'NBA', 'espn_nfl': 'NFL', 'espn_mlb': 'MLB', 'espn_nhl': 'NHL', 'espn_soccer': 'Soccer', 'espn_mma': 'MMA', 'espn_ncaab': 'NCAAB', 'espn_ncaaf': 'NCAAF', 'bleacher_report': 'B/R', 'cbssports': 'CBS', 'yahoo_sports': 'Yahoo' };
+      let html = `<button class="chip ${activeFilter==='all'?'active':''}" data-source="all" onclick="setFilter('all')">All</button>`;
+      sources.forEach(s => {
+        if (s) html += `<button class="chip ${activeFilter===s?'active':''}" data-source="${s}" onclick="setFilter('${s}')">${labels[s]||s}</button>`;
+      });
+      chips.innerHTML = html;
     }
 
     loadStatus();

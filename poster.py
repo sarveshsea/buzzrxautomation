@@ -56,19 +56,15 @@ class TweetPoster:
             return None
 
     def post(self, text, media_path=None, dry_run=False):
-        """Post a tweet with optional media. Returns True on success."""
+        """Post a tweet with optional media. Returns (success, result_or_error)."""
         if dry_run:
             media_note = f" + media: {media_path.name}" if media_path else ""
             logger.info(f"[DRY RUN] Would post: {text}{media_note}")
-            print(f"\n🔸 [DRY RUN] Would post:\n{text}")
-            if media_path:
-                print(f"   📎 With media: {media_path.name}")
-            print()
-            return True
+            return True, "dry_run"
 
         if not self.client:
             logger.error("No Twitter client available. Check your credentials.")
-            return False
+            return False, "No Twitter client — credentials missing or invalid"
 
         try:
             media_ids = None
@@ -80,22 +76,19 @@ class TweetPoster:
             response = self.client.create_tweet(text=text, media_ids=media_ids)
             tweet_id = response.data["id"]
             logger.info(f"Tweet posted successfully! ID: {tweet_id}")
-            print(f"\n✅ Tweet posted! ID: {tweet_id}")
-            print(f"   View: https://x.com/i/status/{tweet_id}\n")
-            return True
+            return True, tweet_id
         except tweepy.TooManyRequests:
-            logger.warning("Rate limit hit. Waiting 15 minutes...")
-            time.sleep(900)
-            return self.post(text, media_path=media_path, dry_run=dry_run)
+            logger.warning("Rate limit hit.")
+            return False, "Rate limit hit — try again in 15 minutes"
         except tweepy.Forbidden as e:
             logger.error(f"Forbidden — check your API access level: {e}")
-            return False
+            return False, f"Forbidden: {e}"
         except tweepy.Unauthorized as e:
             logger.error(f"Unauthorized — check your credentials: {e}")
-            return False
+            return False, f"Unauthorized: {e}"
         except Exception as e:
             logger.error(f"Failed to post tweet: {e}")
-            return False
+            return False, str(e)
 
     def test_auth(self):
         """Test authentication by fetching the authenticated user."""

@@ -53,7 +53,7 @@ class TweetScheduler:
                 # Generate and post
                 tweet = self.content.generate()
                 media_path = self.media.pick_media() if self.media else None
-                success = self.poster.post(tweet, media_path=media_path, dry_run=dry_run)
+                success, result = self.poster.post(tweet, media_path=media_path, dry_run=dry_run)
 
                 if success:
                     self.posts_today += 1

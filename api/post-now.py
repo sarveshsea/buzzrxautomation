@@ -37,12 +37,14 @@ class handler(BaseHTTPRequestHandler):
                 article = None
                 source = "template"
 
-            success = poster.post(tweet)
+            success, result = poster.post(tweet)
             self._respond(200 if success else 500, {
                 "success": success,
                 "tweet": tweet,
                 "source": source,
                 "headline": article["title"] if article else None,
+                "error": None if success else result,
+                "tweet_id": result if success else None,
             })
         except Exception as e:
             self._respond(500, {"error": str(e), "success": False})

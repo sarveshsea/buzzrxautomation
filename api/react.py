@@ -30,12 +30,13 @@ class handler(BaseHTTPRequestHandler):
                 self._respond(200, {"success": True, "message": "No new headlines"})
                 return
 
-            success = poster.post(tweet)
+            success, result = poster.post(tweet)
             self._respond(200 if success else 500, {
                 "success": success,
                 "tweet": tweet,
                 "type": "reactive",
                 "headline": article["title"] if article else None,
+                "error": None if success else result,
             })
         except Exception as e:
             self._respond(500, {"error": str(e), "success": False})

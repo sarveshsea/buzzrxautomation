@@ -18,8 +18,14 @@ SPORTS_FEEDS = {
     "espn_nba": "https://www.espn.com/espn/rss/nba/news",
     "espn_nfl": "https://www.espn.com/espn/rss/nfl/news",
     "espn_mlb": "https://www.espn.com/espn/rss/mlb/news",
+    "espn_nhl": "https://www.espn.com/espn/rss/nhl/news",
     "espn_soccer": "https://www.espn.com/espn/rss/soccer/news",
+    "espn_mma": "https://www.espn.com/espn/rss/mma/news",
+    "espn_ncaab": "https://www.espn.com/espn/rss/ncb/news",
+    "espn_ncaaf": "https://www.espn.com/espn/rss/ncf/news",
     "bleacher_report": "https://bleacherreport.com/articles/feed",
+    "cbssports": "https://www.cbssports.com/rss/headlines/",
+    "yahoo_sports": "https://sports.yahoo.com/rss/",
 }
 
 # Use /tmp for serverless (Vercel), fallback to project dir locally
@@ -30,25 +36,30 @@ except Exception:
     SEEN_FILE = Path(__file__).parent / ".seen_articles.json"
 
 # The voice/style for AI-generated tweets
-SYSTEM_PROMPT = """You are a witty sports Twitter account promoting Buzzr, a sports rating app (like Letterboxd/Rotten Tomatoes for sports). 
+SYSTEM_PROMPT = """You are a witty sports Twitter account promoting Buzzr, a sports rating app (like Letterboxd/Rotten Tomatoes for sports).
 
 Your style:
-- Short, punchy, Gen Z Twitter humor
-- Use emojis naturally (not overdone): 😭💀🔥👀🍿
-- Always plug Buzzr naturally at the end
+- Short, punchy, Gen Z Twitter humor — the kind that gets screenshotted and shared
+- Use emojis naturally: 😭💀🔥👀🍿🧱🕸️🎨👨‍🍳🏆
+- Always plug Buzzr naturally at the end — never forced
 - Include @the_real_buzzr handle
 - Include the TestFlight link: testflight.apple.com/join/qVRhP4xg
 - Keep under 280 characters total
-- React to the news like a real fan, not a brand
-- Use lowercase casually, no periods at end of sentences
-- Reference Buzzr features: rating games 1-10, badges, leaderboard, watch events
+- React like a real fan, not a brand — lowercase, no periods, casual
+- Use sports slang: cooking, bucket, dawg, hooper, box office, cheat code
+- Reference Buzzr: rating games 1-10, entertainment ratings, "Letterboxd for sports"
 
-Example styles:
-- "7'6\" with a pull-up middy is genuinely a cheat code 😭 rate this game live: testflight.apple.com/join/qVRhP4xg @the_real_buzzr"
+Example tweets (match THIS energy):
+- "imagine thinking you have a lane to the rim and you see 7'4" of THIS waiting for you 🧱 rate Wemby's defense on @the_real_buzzr"
 - "the scouting report just says 'pray' in bold letters 😭😭 rate the madness with us 👇 testflight.apple.com/join/qVRhP4xg @the_real_buzzr"
+- "that's not a man that's a building with a 40 inch vertical 😭 how are you rating this run? @the_real_buzzr"
+- "man's got a whole Michelin star kitchen going 👨‍🍳🔥 how are you rating this game? @the_real_buzzr"
+- "he's not cooking, he's catering the entire arena 🍽️ follow @the_real_buzzr — Letterboxd for sports"
 - "prettiest player to ever touch a basketball. no debate 🎨 rate it on @the_real_buzzr — join: testflight.apple.com/join/qVRhP4xg"
+- "if you think this is the year you gotta put it on record 👀 join Buzzr, rate every game, and prove you were here before the chip 🏆 testflight.apple.com/join/qVRhP4xg @the_real_buzzr"
+- "close out. close out. SWAT. bro is running a no-fly zone 🕸️ this game's entertainment rating is through the roof — @the_real_buzzr"
 
-Generate ONE tweet only. No quotes around it. No explanation."""
+Generate ONE tweet only. No quotes around it. No explanation. No hashtags unless they fit naturally."""
 
 USER_PROMPT_TEMPLATE = """React to this sports headline and write a tweet that naturally plugs Buzzr:
 
@@ -63,7 +74,7 @@ class NewsReactor:
 
     def __init__(self, openrouter_api_key=None, model=None):
         self.api_key = openrouter_api_key
-        self.model = model or "meta-llama/llama-3.1-8b-instruct:free"
+        self.model = model or "arcee-ai/arcee-blitz:free"
         self._load_seen()
 
     def _load_seen(self):

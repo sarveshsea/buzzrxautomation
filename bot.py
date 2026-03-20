@@ -73,7 +73,10 @@ def cmd_post(args):
     if media_path:
         print(f"   📎 Media: {media_path.name}")
     print()
-    poster.post(tweet, media_path=media_path, dry_run=dry_run)
+    success, result = poster.post(tweet, media_path=media_path, dry_run=dry_run)
+    if not success:
+        print(f"❌ {result}")
+        sys.exit(1)
 
 
 def cmd_preview(args):
@@ -130,7 +133,10 @@ def cmd_react(args):
     if media_path:
         print(f"   📎 Media: {media_path.name}")
     print()
-    poster.post(tweet, media_path=media_path, dry_run=dry_run)
+    success, result = poster.post(tweet, media_path=media_path, dry_run=dry_run)
+    if not success:
+        print(f"❌ {result}")
+        sys.exit(1)
 
 
 def cmd_test_auth(args):

@@ -22,12 +22,13 @@ class handler(BaseHTTPRequestHandler):
             content = ContentGenerator(content_mix=config.content_mix, hashtags=config.hashtags)
             poster = TweetPoster(config)
             tweet = content.generate()
-            success = poster.post(tweet)
+            success, result = poster.post(tweet)
 
             self._respond(200 if success else 500, {
                 "success": success,
                 "tweet": tweet,
                 "type": "scheduled",
+                "error": None if success else result,
             })
         except Exception as e:
             self._respond(500, {"error": str(e), "success": False})

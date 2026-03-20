@@ -26,7 +26,7 @@ class Config:
         # OpenRouter for AI tweet generation
         self.openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "")
         self.openrouter_model = os.getenv(
-            "OPENROUTER_MODEL", "meta-llama/llama-3.1-8b-instruct:free"
+            "OPENROUTER_MODEL", "arcee-ai/arcee-blitz:free"
         )
 
         # Load settings from config.json
